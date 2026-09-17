@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SSML // RARE ARCHIVE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="scanlines"></div>
+
+  <div id="authGate" class="gate">
+    <div class="gate-card">
+      <div class="gate-orbit"><span>SSML</span></div>
+      <p class="eyebrow">PRIVATE ARCHIVE // ACCESS REQUIRED</p>
+      <h1>WAIT!</h1>
+      <p class="gate-copy">You need to sign in before entering the SSML Rare Archive.</p>
+      <button id="openSignup" class="primary-btn">SIGN IN / JOIN SSML <span>→</span></button>
+      <p class="tiny-note">This demo stores the profile in this browser. Connect a real database/auth provider before using it with real accounts.</p>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#">
+      <span class="brand-mark">S</span>
+      <span><b>SSML</b><small>RARE ARCHIVE</small></span>
+    </a>
+    <nav>
+      <button class="nav-btn active" data-page="crates">CRATES</button>
+      <button class="nav-btn" data-page="inventory">BACKPACK</button>
+      <button class="nav-btn" data-page="activity">ACTIVITY</button>
+    </nav>
+    <div class="top-actions">
+      <div class="currency-pill"><img id="currencyIcon" alt=""><span id="credits">25,000</span><small> CREDITS</small></div>
+      <button id="profileBtn" class="profile-chip">
+        <img id="navAvatar" alt="">
+        <span id="navName">GUEST</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="cratesPage" class="page active">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">SSML // CRATE SYSTEM</p>
+          <h2>HUNT THE <span>IMPOSSIBLE.</span></h2>
+          <p>Open a crate. Watch the archive roll. Every title has a rarity, a visual identity, and a place in your backpack.</p>
+        </div>
+        <div class="hero-stat"><strong id="titleCount">24</strong><span>ARCHIVE TITLES</span></div>
+        <div class="hero-stat"><strong>0.01%</strong><span>ULTRA-RARE FLOOR</span></div>
+      </div>
+
+      <div class="section-head">
+        <div><h3>AVAILABLE CRATES</h3><p>Virtual credits only • no cash value</p></div>
+        <div class="filters">
+          <button class="filter active" data-filter="all">ALL</button>
+          <button class="filter" data-filter="starter">STARTER</button>
+          <button class="filter" data-filter="rare">RARE</button>
+          <button class="filter" data-filter="mythic">MYTHIC</button>
+        </div>
+      </div>
+      <div id="crateGrid" class="crate-grid"></div>
+    </section>
+
+    <section id="inventoryPage" class="page">
+      <div class="section-head">
+        <div><p class="eyebrow">YOUR COLLECTION</p><h2>BACKPACK</h2><p>Duplicate titles stack automatically.</p></div>
+        <div class="mini-total"><span id="ownedCount">0</span> TITLES OWNED</div>
+      </div>
+      <div id="inventoryGrid" class="inventory-grid"></div>
+    </section>
+
+    <section id="activityPage" class="page">
+      <div class="section-head">
+        <div><p class="eyebrow">LIVE ARCHIVE</p><h2>ACTIVITY</h2><p>Recent local rolls and profile events.</p></div>
+      </div>
+      <div id="activityList" class="activity-list"></div>
+    </section>
+  </main>
+
+  <div id="contentsModal" class="modal hidden">
+    <div class="modal-card contents-card">
+      <button class="close" data-close="contentsModal">×</button>
+      <p class="eyebrow" id="contentsEyebrow">CRATE CONTENTS</p>
+      <h2 id="contentsTitle"></h2>
+      <div id="contentsList" class="odds-list"></div>
+    </div>
+  </div>
+
+  <div id="rollModal" class="modal hidden">
+    <div class="modal-card roll-card">
+      <div class="roll-top">
+        <div><p class="eyebrow">UNBOXING // ENERGY</p><h2 id="rollCrateName"></h2></div>
+        <button class="close" data-close="rollModal">×</button>
+      </div>
+      <div class="roll-window">
+        <div class="roll-track" id="rollTrack"></div>
+        <div class="roll-pointer"></div>
+      </div>
+      <div id="rollStatus" class="roll-status">ROLLING ARCHIVE...</div>
+      <button id="skipRoll" class="secondary-btn">SKIP ANIMATION</button>
+      <div id="rollResult" class="roll-result hidden">
+        <div id="resultGlow" class="result-glow"></div>
+        <p class="eyebrow">YOU UNLOCKED</p>
+        <h2 id="resultTitle"></h2>
+        <p id="resultRarity"></p>
+        <div id="resultEffect" class="result-effect"></div>
+        <div class="result-actions"><button id="openBackpack" class="primary-btn">OPEN BACKPACK</button><button id="closeResult" class="secondary-btn">CLOSE</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="signupModal" class="modal hidden">
+    <div class="modal-card signup-card">
+      <button class="close" data-close="signupModal">×</button>
+      <div id="signupStep1">
+        <p class="eyebrow">SSML // IDENTITY SETUP</p>
+        <h2>Create your archive profile</h2>
+        <p class="muted">Your banner becomes the profile background and your avatar becomes your archive identity.</p>
+        <label>USERNAME<input id="usernameInput" maxlength="24" placeholder="Your SSML name"></label>
+        <div class="upload-row">
+          <label class="upload-box"><span>PROFILE IMAGE</span><input id="avatarInput" type="file" accept="image/*"><img id="avatarPreview" alt=""></label>
+          <label class="upload-box wide"><span>PROFILE BANNER</span><input id="bannerInput" type="file" accept="image/*"><img id="bannerPreview" alt=""></label>
+        </div>
+        <label>BIO<textarea id="bioInput" maxlength="180" placeholder="Tell the archive who you are..."></textarea></label>
+        <button id="continueJoin" class="primary-btn full">JOIN SSML NOW →</button>
+      </div>
+      <div id="signupStep2" class="hidden know-step">
+        <div class="question-mark">?</div>
+        <p class="eyebrow">IDENTITY CHECK</p>
+        <h2>Do we know you?</h2>
+        <p class="muted">Choose the access path that describes you.</p>
+        <div class="role-choice">
+          <button data-access="member"><b>MEMBER</b><small>Known SSML member</small></button>
+          <button data-access="guest"><b>GUEST</b><small>New to the archive</small></button>
+          <button data-access="administrative"><b>ADMINISTRATIVE</b><small>Requires proof</small></button>
+        </div>
+      </div>
+      <div id="adminStep" class="hidden know-step">
+        <div class="admin-warning">PROVE IT &gt;:(</div>
+        <p class="muted">Administrative access requires your verification code.</p>
+        <input id="adminCode" class="code-input" placeholder="ENTER ADMIN CODE" autocomplete="off">
+        <p id="adminError" class="error"></p>
+        <button id="verifyAdmin" class="primary-btn full">VERIFY ACCESS</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-card profile-card">
+      <button class="close" data-close="profileModal">×</button>
+      <div id="profileBanner" class="profile-banner"></div>
+      <div class="profile-main">
+        <img id="profileAvatar" class="profile-avatar" alt="">
+        <div><p class="eyebrow">SSML MEMBER</p><h2 id="profileName"></h2><div id="profileTitle" class="title-badge"></div></div>
+      </div>
+      <p id="profileBio" class="profile-bio"></p>
+      <div class="profile-stats"><div><b id="profileOwned">0</b><span>TITLES</span></div><div><b id="profileCredits">0</b><span>CREDITS</span></div><div><b id="profileAccess">GUEST</b><span>ACCESS</span></div></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
