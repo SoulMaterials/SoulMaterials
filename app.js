@@ -63,14 +63,54 @@ function rarityRank(r){ return rarityPower[r] || 0; }
 function ensureAccountShape(a){
   a.inventory ||= {};
   a.activity ||= [];
+  a.following ||= [];
+  a.followers ||= [];
+  a.friends ||= [];
   a.credits = Number.isFinite(a.credits) ? Math.max(0,Math.floor(a.credits)) : 25000;
   a.access ||= "guest";
   a.titleId ||= a.access === "administrative" ? "administrative" : a.access === "member" ? "member" : "guest";
+  a.equippedTitleId = a.equippedTitleId === null ? null : (a.equippedTitleId || a.titleId);
   a.avatar ||= DEFAULT_AVATAR; a.banner ||= DEFAULT_BANNER; a.bio ||= "No bio yet.";
   return a;
 }
 if (!state.accounts || typeof state.accounts !== "object") state.accounts = {};
 Object.values(state.accounts).forEach(ensureAccountShape);
+
+// V4 accounts did not have passwords. They are intentionally retired so every
+// existing visitor must create a fresh account with a password.
+let retiredLegacyAccounts = 0;
+for (const [id, a] of Object.entries(state.accounts)) {
+  if (!a.passwordHash) {
+    delete state.accounts[id];
+    retiredLegacyAccounts++;
+  }
+}
+if (!state.accounts[state.activeUserId]) state.activeUserId = null;
+if(retiredLegacyAccounts && !sessionStorage.getItem("ssmlPasswordNotice")){
+  sessionStorage.setItem("ssmlPasswordNotice","1");
+  setTimeout(()=>alert("SSML account update: old accounts were retired because they did not have passwords. Please create your account again with a password."),200);
+}
+
+async function hashPassword(password){
+  const text = String(password || "");
+  if (window.crypto?.subtle) {
+    const data = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+function profileRole(p){
+  return p?.equippedTitleId ? (role(p.equippedTitleId)||role(p.titleId)||role("guest")) : null;
+}
+
+function applyProfileTheme(p){
+  const r=profileRole(p);
+  document.documentElement.style.setProperty("--profile-glow", r?.glow || "#52e6ff");
+  document.body.dataset.profileEffect = r?.effect || "";
+  document.body.classList.toggle("profile-rgb", !!r && /rgb|rainbow|spectrum|color/i.test(`${r.name} ${r.effect}`));
+}
 
 function rarityForCrate(r, c){
   // baseChance is the editable difficulty weight for the title. Lower means harder.
@@ -102,7 +142,7 @@ function renderCrates(filter="all"){
   const grid=$("#crateGrid"); if(!grid)return;
   const list=crates.filter(c=>filter==="all"||c.tier===filter);
   grid.innerHTML=list.map(c=>`<article class="crate crate-${c.tier}" style="--crateGlow:${c.accent}">
-    <div class="crate-art"><span class="crate-spark spark-a"></span><span class="crate-spark spark-b"></span><img alt="${escapeHtml(c.name)}" src="${iconSvg(c)}"></div>
+    <div class="crate-art"><span class="crate-spark spark-a"></span><span class="crate-spark spark-b"></span><img alt="${escapeHtml(c.name)}" src="${escapeHtml(c.image || iconSvg(c))}" onerror="this.onerror=null;this.src='${iconSvg(c)}'"></div>
     <div class="crate-body"><p class="eyebrow">${c.tier.toUpperCase()} ARCHIVE</p><h4>${escapeHtml(c.name)}</h4><p class="crate-desc">${escapeHtml(c.desc)}</p>
       <div class="crate-meta"><span class="rarity" style="color:${c.accent}">${c.pool.length} TITLES</span><span class="cost">${money(c.cost)} C</span></div>
       <div class="crate-actions"><button class="secondary-btn" data-view-crate="${c.id}">VIEW</button><button class="primary-btn" data-open-crate="${c.id}">OPEN</button></div>
@@ -113,7 +153,7 @@ function renderInventory(){
   const entries=Object.entries(a?.inventory||{}).filter(([id,count])=>role(id)&&count>0).sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
   $("#ownedCount").textContent=entries.reduce((n,[,v])=>n+v,0);
   if(!entries.length){grid.innerHTML=`<div class="activity"><div><b>Your backpack is empty.</b><p class="muted">Open a crate to claim your first title.</p></div></div>`;return;}
-  grid.innerHTML=entries.map(([id,count])=>{const r=role(id);return `<div class="inventory-item" style="--glow:${r.glow}"><div class="inv-head"><span class="rarity" style="color:${r.glow}">${r.rarity}</span><span class="inv-count">x${count}</span></div><div class="inv-title">${escapeHtml(r.name)}</div><div class="inv-rarity">${escapeHtml(r.effect)}</div><button class="sell-btn" data-sell-role="${id}">SELL FOR ${money(r.value)} C</button></div>`}).join("");
+  grid.innerHTML=entries.map(([id,count])=>{const r=role(id);return `<div class="inventory-item" style="--glow:${r.glow}"><div class="inv-head"><span class="rarity" style="color:${r.glow}">${r.rarity}</span><span class="inv-count">x${count}</span></div><div class="inv-title">${escapeHtml(r.name)}</div><div class="inv-rarity">${escapeHtml(r.effect)}</div><div class="inventory-actions"><button class="equip-btn ${a.equippedTitleId===id?"equipped":""}" data-equip-role="${id}">${a.equippedTitleId===id?"EQUIPPED":"EQUIP"}</button><button class="sell-btn" data-sell-role="${id}">SELL FOR ${money(r.value)} C</button></div></div>`}).join("");
 }
 function renderActivity(){
   const list=$("#activityList"); if(!list)return;
@@ -122,7 +162,7 @@ function renderActivity(){
 }
 function renderAll(){
   const a=account();
-  $("#credits").textContent=money(a?.credits||0); $("#currencyIcon").src=COIN_ICON;
+  $("#credits").textContent=money(a?.credits||0); $("#currencyIcon").src=COIN_ICON; applyProfileTheme(a);
   $("#navName").textContent=a?.username||"GUEST"; $("#navAvatar").src=a?.avatar||DEFAULT_AVATAR;
   $("#titleCount").textContent=roles.length; renderCrates($(".filter.active")?.dataset.filter||"all"); renderInventory(); renderActivity();
   const isAdmin=a?.access==="administrative";
@@ -145,7 +185,7 @@ function showContents(id){
   const c=crates.find(x=>x.id===id); if(!c)return;
   $("#contentsEyebrow").textContent=`${c.tier.toUpperCase()} // CONTENTS`;
   $("#contentsTitle").textContent=c.name;
-  const entries=getCrateEntries(c).sort((a,b)=>b.chance-a.chance);
+  const entries=getCrateEntries(c).sort((a,b)=>a.chance-b.chance);
   $("#contentsList").innerHTML=entries.map(e=>`<div class="odds-row"><b style="color:${e.role.glow}">${escapeHtml(e.role.name)}</b><span>${e.role.rarity}</span><strong>${e.chance.toFixed(e.chance<1?3:2)}%</strong></div>`).join("");
   $("#contentsNote").textContent=`${c.pool.length} titles • ${money(c.cost)} credits • higher-cost crates contain stronger rarity pools.`;
   showModal("contentsModal");
@@ -242,24 +282,126 @@ function readImage(input,img){
   reader.readAsDataURL(f);
 }
 
-function completeProfile(access){
+async function completeProfile(access){
   const username=$("#usernameInput").value.trim();
-  const avatar=$("#avatarPreview").src||DEFAULT_AVATAR, banner=$("#bannerPreview").src||DEFAULT_BANNER, bio=$("#bioInput").value.trim()||"No bio yet.";
+  const password=$("#passwordInput").value;
+  const avatar=$("#avatarPreview").src||DEFAULT_AVATAR;
+  const banner=$("#bannerPreview").src||DEFAULT_BANNER;
+  const bio=$("#bioInput").value.trim()||"No bio yet.";
+
+  if(username.length<2){alert("Username must be at least 2 characters.");return;}
+  if(password.length<6){alert("Password must be at least 6 characters.");return;}
+
   const existing=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
-  if(existing){alert("That username already exists in this browser archive.");return;}
-  const id=uid(); const a=ensureAccountShape({id,username,avatar,banner,bio,access,credits:25000,inventory:{},activity:[],titleId:access==="guest"?"guest":"member"});
-  a.inventory[a.titleId]=1; state.accounts[id]=a; state.activeUserId=id;
-  log(`${username} joined SSML as ${role(a.titleId).name}`,access==="guest"?"#5dff9b":"#9b6cff",a); closeModal("signupModal"); $("#authGate").classList.add("hidden"); save(); openProfile(id);
+  if(existing){alert("That username already exists. Use the existing-account sign in instead.");return;}
+
+  const id=uid();
+  const passwordHash=await hashPassword(password);
+  const a=ensureAccountShape({
+    id,username,avatar,banner,bio,passwordHash,access,
+    credits:25000,inventory:{},activity:[],
+    titleId:access==="guest"?"guest":"member",
+    equippedTitleId:access==="guest"?"guest":"member",
+    following:[],followers:[],friends:[]
+  });
+
+  a.inventory[a.titleId]=1;
+  state.accounts[id]=a;
+  state.activeUserId=id;
+  log(`${username} joined SSML as ${role(a.titleId).name}`,access==="guest"?"#5dff9b":"#9b6cff",a);
+  closeModal("signupModal");
+  $("#authGate").classList.add("hidden");
+  save();
+  openProfile(id);
 }
+
 function openProfile(id=state.activeUserId){
   const p=state.accounts[id]; if(!p)return;
-  $("#profileBanner").style.backgroundImage=`url("${p.banner}")`; $("#profileAvatar").src=p.avatar; $("#profileName").textContent=p.username;
-  const r=role(p.titleId)||role("guest"); $("#profileTitle").textContent=r.name; $("#profileTitle").style.borderColor=r.glow; $("#profileTitle").style.color=r.glow; $("#profileTitle").style.boxShadow=`0 0 18px ${r.glow}44`;
-  $("#profileBio").textContent=p.bio; $("#profileOwned").textContent=Object.values(p.inventory).reduce((x,y)=>x+y,0); $("#profileCredits").textContent=money(p.credits); $("#profileAccess").textContent=p.access.toUpperCase();
-  const owned=Object.entries(p.inventory).filter(([id,count])=>role(id)&&count>0).sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
-  $("#profileInventory").innerHTML=owned.length?owned.map(([id,count])=>{const rr=role(id);return `<div class="profile-role" style="--roleGlow:${rr.glow}"><div class="profile-role-name"><span>${escapeHtml(rr.name)}</span><em>${escapeHtml(rr.effect)}</em></div><small>${rr.rarity}</small><strong>${money(rr.value)} C</strong><b>x${count}</b></div>`}).join(""):`<div class="muted">No titles collected yet.</div>`;
-  $("#profileAdminTools")?.classList.toggle("hidden",account()?.access!=="administrative"); $("#profileAdminTarget").value=id; showModal("profileModal");
+  ensureAccountShape(p);
+  $("#profileBanner").style.backgroundImage=`url("${p.banner}")`;
+  $("#profileAvatar").src=p.avatar;
+  $("#profileName").textContent=p.username;
+
+  const r=profileRole(p);
+  $("#profileModal .profile-card")?.style.setProperty("--profileGlow", r?.glow || "#52e6ff");
+  const titleBox=$("#profileTitle");
+  titleBox.textContent=r ? r.name : "NO TITLE EQUIPPED";
+  titleBox.style.borderColor=r?.glow || "#667085";
+  titleBox.style.color=r?.glow || "#667085";
+  titleBox.style.boxShadow=r ? `0 0 18px ${r.glow}66, 0 0 40px ${r.glow}22` : "none";
+  titleBox.classList.toggle("rgb-title", !!r && /rgb|rainbow|spectrum|color/i.test(`${r.name} ${r.effect}`));
+
+  $("#profileBio").textContent=p.bio;
+  $("#profileOwned").textContent=Object.values(p.inventory).reduce((x,y)=>x+y,0);
+  $("#profileCredits").textContent=money(p.credits);
+  $("#profileAccess").textContent=p.access.toUpperCase();
+
+  const owned=Object.entries(p.inventory).filter(([rid,count])=>role(rid)&&count>0)
+    .sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
+
+  $("#profileInventory").innerHTML=owned.length?owned.map(([rid,count])=>{
+    const rr=role(rid), equipped=p.equippedTitleId===rid;
+    return `<div class="profile-role ${equipped?"profile-role-equipped":""}" style="--roleGlow:${rr.glow}">
+      <div class="profile-role-name"><span>${escapeHtml(rr.name)}</span><em>${escapeHtml(rr.effect)}</em></div>
+      <small>${rr.rarity}</small><strong>${money(rr.value)} C</strong><b>x${count}</b>
+      <button class="profile-equip-btn" data-profile-equip="${rid}">${equipped?"UNEQUIP":"EQUIP"}</button>
+    </div>`;
+  }).join(""):`<div class="muted">No titles collected yet.</div>`;
+
+  const me=account();
+  const self=me?.id===p.id;
+  const following=(me?.following||[]).includes(p.id);
+  const friends=(me?.friends||[]).includes(p.id);
+
+  if(self){
+    $("#profileSocialActions").innerHTML=`<span class="social-self">THIS IS YOUR PROFILE</span>`;
+  }else{
+    $("#profileSocialActions").innerHTML=`
+      <button class="social-btn ${following?"active":""}" data-follow-user="${p.id}">${following?"FOLLOWING":"FOLLOW"}</button>
+      <button class="social-btn ${friends?"active":""}" data-friend-user="${p.id}">${friends?"FRIENDS":"ADD FRIEND"}</button>`;
+  }
+
+  const friendIds=(p.friends||[]).filter(fid=>state.accounts[fid]);
+  $("#profileFriends").innerHTML=friendIds.length ? friendIds.map(fid=>{
+    const f=state.accounts[fid], fr=profileRole(f)||role("guest");
+    return `<button class="friend-card" data-profile-user="${f.id}">
+      <img src="${f.avatar}" alt=""><span><b>${escapeHtml(f.username)}</b><small style="color:${fr?.glow||"#fff"}">${escapeHtml(fr?.name||"No title")}</small></span>
+    </button>`;
+  }).join("") : `<div class="muted">No friends yet.</div>`;
+
+  $("#profileAdminTools")?.classList.toggle("hidden",me?.access!=="administrative");
+  $("#profileAdminTarget").value=id;
+  showModal("profileModal");
 }
+
+function toggleFollow(targetId){
+  const me=account(), target=state.accounts[targetId];
+  if(!me||!target||me.id===targetId)return;
+  me.following ||= []; target.followers ||= [];
+  const i=me.following.indexOf(targetId);
+  if(i>=0){me.following.splice(i,1); const j=target.followers.indexOf(me.id);if(j>=0)target.followers.splice(j,1);}
+  else {me.following.push(targetId); if(!target.followers.includes(me.id))target.followers.push(me.id);}
+  save(); openProfile(targetId);
+}
+
+function toggleFriend(targetId){
+  const me=account(), target=state.accounts[targetId];
+  if(!me||!target||me.id===targetId)return;
+  me.friends ||= []; target.friends ||= [];
+  const i=me.friends.indexOf(targetId);
+  if(i>=0){me.friends.splice(i,1); const j=target.friends.indexOf(me.id);if(j>=0)target.friends.splice(j,1);}
+  else {me.friends.push(targetId); if(!target.friends.includes(me.id))target.friends.push(me.id);}
+  save(); openProfile(targetId);
+}
+
+function equipTitle(id){
+  const a=account(), r=role(id);
+  if(!a||!r||!(a.inventory[id]>0))return;
+  a.equippedTitleId = a.equippedTitleId===id ? null : id;
+  save();
+  openProfile(a.id);
+}
+
 function openDirectory(){
   $("#directorySearch").value=""; $("#directoryResults").innerHTML=`<div class="activity"><b>Search for an SSML username.</b></div>`; showModal("directoryModal");
 }
@@ -297,18 +439,29 @@ function resetSignup(){
   $("#adminError") && ($("#adminError").textContent = "");
   $("#adminCode") && ($("#adminCode").value = "");
   $("#loginUsername") && ($( "#loginUsername").value = "");
+  $("#loginPassword") && ($("#loginPassword").value = "");
+  $("#passwordInput") && ($("#passwordInput").value = "");
 }
 function openAuth(){
   resetSignup();
   $("#authGate")?.classList.add("hidden");
   showModal("signupModal");
 }
-function signInExisting(){
+async function signInExisting(){
   const username=$("#loginUsername")?.value.trim();
   if(!username){ alert("Enter your SSML username first."); return; }
   const found=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
-  if(!found){ alert("No SSML account with that username exists in this browser yet. Create it with JOIN SSML NOW."); return; }
-  state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
+  if(!found){ alert("That account was retired because it was created before passwords were added. Please create it again with JOIN SSML NOW."); return; }
+  const password=$("#loginPassword")?.value || "";
+  if(!password){ alert("Enter your password."); return; }
+  const hash=await hashPassword(password);
+  if(hash!==found.passwordHash){ alert("Incorrect password."); return; }
+  state.activeUserId=found.id;
+  save();
+  closeModal("signupModal");
+  $("#authGate")?.classList.add("hidden");
+  renderAll();
+  openProfile(found.id);
 }
 
 function renderRoleEditor(selectedId){
@@ -363,7 +516,12 @@ $$("[data-close]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
 $("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);});
-$("#inventoryGrid").addEventListener("click",e=>{const b=e.target.closest("[data-sell-role]");if(b)sellTitle(b.dataset.sellRole);});
+$("#inventoryGrid").addEventListener("click",e=>{
+  const equip=e.target.closest("[data-equip-role]");
+  const sell=e.target.closest("[data-sell-role]");
+  if(equip)equipTitle(equip.dataset.equipRole);
+  if(sell)sellTitle(sell.dataset.sellRole);
+});
 $("#skipRoll").addEventListener("click",()=>{
   if(!rolling || !pendingRole)return;
   const track=$("#rollTrack");
@@ -386,6 +544,17 @@ $("#continueJoin")?.addEventListener("click",()=>{if(!$("#usernameInput").value.
 $$("[data-access]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.access==="administrative"){$("#signupStep2").classList.add("hidden");$("#adminStep").classList.remove("hidden");}else completeProfile(b.dataset.access)}));
 $("#verifyAdmin").addEventListener("click",()=>{if($("#adminCode").value.trim()!=="SSML-ADMIN"){$("#adminError").textContent="Invalid proof code.";return;}completeProfile("administrative")});
 $("#profileBtn").addEventListener("click",()=>openProfile());
+$("#profileSocialActions").addEventListener("click",e=>{
+  const f=e.target.closest("[data-follow-user]"); const fr=e.target.closest("[data-friend-user]");
+  if(f)toggleFollow(f.dataset.followUser);
+  if(fr)toggleFriend(fr.dataset.friendUser);
+});
+$("#profileInventory").addEventListener("click",e=>{
+  const b=e.target.closest("[data-profile-equip]"); if(b)equipTitle(b.dataset.profileEquip);
+});
+$("#profileFriends").addEventListener("click",e=>{
+  const b=e.target.closest("[data-profile-user]"); if(b)openProfile(b.dataset.profileUser);
+});
 $("#directoryBtn").addEventListener("click",openDirectory); $("#directorySearch").addEventListener("input",searchDirectory); $("#directoryResults").addEventListener("click",e=>{const b=e.target.closest("[data-profile-user]");if(b){closeModal("directoryModal");openProfile(b.dataset.profileUser)}});
 $("#adminNav").addEventListener("click",()=>openAdminPanel());
 $("#profileAdminGive").addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");$("#giftTargetId").value=id;$("#giftAmount").value="";showModal("giftModal")});

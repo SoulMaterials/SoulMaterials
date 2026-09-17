@@ -33,3 +33,37 @@ button,input,textarea{font:inherit}button{cursor:pointer;color:inherit}.hidden{d
 .auth-divider{display:flex;align-items:center;gap:10px;margin:20px 0 10px;color:#627087;font-size:8px;letter-spacing:1.5px}.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#ffffff12;flex:1}.login-row{display:flex;gap:8px}.login-row input{margin-top:0!important;flex:1}.login-row button{min-width:110px}.login-row .secondary-btn{padding:12px 15px}
 
 .config-card{width:min(900px,96vw);max-height:94vh;overflow:auto}.config-tabs{display:flex;gap:6px;margin:18px 0}.config-tab{flex:1;padding:11px;border:1px solid var(--line);background:#ffffff05;border-radius:9px;font:800 9px Orbitron;letter-spacing:1px;color:var(--muted)}.config-tab.active{color:var(--text);border-color:#52e6ff55;background:#52e6ff09}.config-panel{display:grid;gap:12px}.editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.editor-grid label,.config-panel>label{display:grid;gap:6px}.editor-preview{padding:18px;border:1px solid var(--line);border-radius:11px;background:#03070d;text-align:center;font:800 22px Orbitron}.pool-editor{min-height:100px;resize:vertical}.config-panel input,.config-panel select,.config-panel textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#02050a;color:var(--text);outline:0}.config-panel input:focus,.config-panel select:focus,.config-panel textarea:focus{border-color:#52e6ff55;box-shadow:0 0 18px #52e6ff0d}@media(max-width:650px){.editor-grid{grid-template-columns:1fr}}
+
+/* === SSML SOCIAL + EQUIP + RARE TITLE EFFECTS === */
+.profile-social-actions{display:flex;gap:8px;padding:4px 28px 14px;align-items:center;flex-wrap:wrap}
+.social-btn{padding:9px 15px;border-radius:8px;border:1px solid #52e6ff44;background:#52e6ff08;color:#dce7f7;font:800 9px Orbitron;letter-spacing:1px;cursor:pointer}
+.social-btn:hover,.social-btn.active{border-color:#52e6ff99;box-shadow:0 0 22px #52e6ff22;color:#fff}
+.social-self{font-size:9px;color:#68768d;letter-spacing:1.4px}
+.profile-friends{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 28px 14px;max-height:180px;overflow:auto}
+.friend-card{display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #ffffff12;border-radius:9px;background:#ffffff04;color:#fff;text-align:left;cursor:pointer}
+.friend-card:hover{border-color:#52e6ff55;box-shadow:0 0 20px #52e6ff12}
+.friend-card img{width:34px;height:34px;border-radius:8px;object-fit:cover}
+.friend-card span{display:grid;gap:3px;min-width:0}.friend-card b{font-size:9px;overflow:hidden;text-overflow:ellipsis}.friend-card small{font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inventory-actions{display:flex;gap:6px;margin-top:8px}.equip-btn,.profile-equip-btn{padding:7px 9px;border-radius:7px;border:1px solid #52e6ff33;background:#52e6ff07;color:#cfe7ff;font:800 8px Orbitron;cursor:pointer}
+.equip-btn:hover,.equip-btn.equipped,.profile-equip-btn:hover{border-color:#52e6ff99;box-shadow:0 0 18px #52e6ff22}
+.profile-role{flex-wrap:wrap}.profile-role-equipped{box-shadow:inset 0 0 25px color-mix(in srgb,var(--roleGlow) 10%,transparent),0 0 18px color-mix(in srgb,var(--roleGlow) 8%,transparent)}
+.profile-equip-btn{margin-left:auto}
+.rgb-title{animation:rgbTitle 3s linear infinite}
+.profile-rgb .title-badge{animation:rgbTitle 3s linear infinite}
+@keyframes rgbTitle{
+  0%{color:#ff3b3b;border-color:#ff3b3b;box-shadow:0 0 20px #ff3b3b66}
+  16%{color:#ff9f1c;border-color:#ff9f1c;box-shadow:0 0 20px #ff9f1c66}
+  33%{color:#ffe66d;border-color:#ffe66d;box-shadow:0 0 20px #ffe66d66}
+  50%{color:#3cff8f;border-color:#3cff8f;box-shadow:0 0 20px #3cff8f66}
+  66%{color:#42d9ff;border-color:#42d9ff;box-shadow:0 0 20px #42d9ff66}
+  83%{color:#9b6cff;border-color:#9b6cff;box-shadow:0 0 20px #9b6cff66}
+  100%{color:#ff3b3b;border-color:#ff3b3b;box-shadow:0 0 20px #ff3b3b66}
+}
+@media(max-width:650px){.profile-friends{grid-template-columns:1fr}.profile-social-actions{padding-left:18px;padding-right:18px}.profile-equip-btn{width:100%;margin-left:0}.inventory-actions{flex-direction:column}.login-row-stack{flex-direction:column}.login-row-stack input,.login-row-stack button{width:100%!important}}
+
+.login-row-stack{align-items:stretch;flex-wrap:wrap}.login-row-stack input{margin-top:0!important;min-width:0}.login-row-stack button{flex:0 0 auto}
+
+.profile-card{border-color:color-mix(in srgb,var(--profileGlow,#52e6ff) 35%,var(--line));box-shadow:0 0 45px color-mix(in srgb,var(--profileGlow,#52e6ff) 10%,transparent)}
+.profile-banner{box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--profileGlow,#52e6ff) 55%,transparent)}
+.profile-avatar{border-color:color-mix(in srgb,var(--profileGlow,#52e6ff) 55%,transparent);box-shadow:0 0 30px color-mix(in srgb,var(--profileGlow,#52e6ff) 20%,transparent)}
+.profile-stats div{box-shadow:inset 0 0 22px color-mix(in srgb,var(--profileGlow,#52e6ff) 4%,transparent)}

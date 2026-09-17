@@ -11,7 +11,7 @@ window.SSML_CRATE_DATA.push({
     tier: "mythic",
 
     // CHANGE THIS IMAGE URL TO YOUR CRATE IMAGE
-    image: "https://chatgpt.com/backend-api/estuary/content?id=file_00000000ab8481f59c5be8c8bf46571f&ts=497128&p=fs&cid=1&sig=41a4a2709a2dc87080baefca7f5cc3afa21744c0c9118e57880d89bf7b223ba0&v=0",
+    image: "",
 
     // CHANGE THE CRATE PRICE HERE
     cost: 9000000000000000,
@@ -44,7 +44,7 @@ window.SSML_CRATE_DATA.push({
             price: 999999999999999,
 
             effect:
-                "Forgotten Pumpkin Kishin — blood-orange Halloween aura, spectral pumpkin flames, black-red smoke, and cursed saint glow"
+                "Forgotten Pumpkin Kishin — RGB rainbow aura flowing left, orange-and-black Halloween flames, spectral pumpkin fire, black-red smoke, and cursed saint glow"
         },
 
         // =====================================================

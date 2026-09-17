@@ -126,7 +126,8 @@
         <p class="eyebrow">SSML // IDENTITY SETUP</p>
         <h2>Create your archive profile</h2>
         <p class="muted">Your banner becomes the profile background and your avatar becomes your archive identity.</p>
-        <label>USERNAME<input id="usernameInput" maxlength="24" placeholder="Your SSML name"></label>
+        <label>USERNAME<input id="usernameInput" maxlength="24" placeholder="Your SSML name" autocomplete="username"></label>
+        <label>PASSWORD<input id="passwordInput" type="password" minlength="6" maxlength="72" placeholder="Create a password (6+ characters)" autocomplete="new-password"></label>
         <div class="upload-row">
           <label class="upload-box"><span>PROFILE IMAGE</span><input id="avatarInput" type="file" accept="image/*"><img id="avatarPreview" alt=""></label>
           <label class="upload-box wide"><span>PROFILE BANNER</span><input id="bannerInput" type="file" accept="image/*"><img id="bannerPreview" alt=""></label>
@@ -135,7 +136,7 @@
         <div class="auth-divider"><span>NEW ACCOUNT</span></div>
         <button id="continueJoin" class="primary-btn full">JOIN SSML NOW →</button>
         <div class="auth-divider"><span>ALREADY HAVE AN SSML ACCOUNT?</span></div>
-        <div class="login-row"><input id="loginUsername" placeholder="Existing SSML username" maxlength="24" autocomplete="username"><button id="loginExisting" class="secondary-btn">SIGN IN</button></div>
+        <div class="login-row login-row-stack"><input id="loginUsername" placeholder="Existing SSML username" maxlength="24" autocomplete="username"><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"><button id="loginExisting" class="secondary-btn">SIGN IN</button></div>
       </div>
       <div id="signupStep2" class="hidden know-step">
         <div class="question-mark">?</div>
@@ -167,7 +168,9 @@
         <div><p class="eyebrow">SSML MEMBER</p><h2 id="profileName"></h2><div id="profileTitle" class="title-badge"></div></div>
       </div>
       <p id="profileBio" class="profile-bio"></p>
+      <div id="profileSocialActions" class="profile-social-actions"></div>
       <div class="profile-section-title">BACKPACK // TITLES WON</div><div id="profileInventory" class="profile-inventory"></div>
+      <div class="profile-section-title">FRIENDS // ARCHIVE CIRCLE</div><div id="profileFriends" class="profile-friends"></div>
       <input id="profileAdminTarget" type="hidden">
       <div id="profileAdminTools" class="profile-admin-tools hidden"><span>ADMINISTRATIVE TOOLS</span><button id="profileAdminGive" class="primary-btn">GIVE CREDITS</button><button id="profileAdminSet" class="secondary-btn">SET CREDITS</button></div>
       <div class="profile-stats"><div><b id="profileOwned">0</b><span>TITLES</span></div><div><b id="profileCredits">0</b><span>CREDITS</span></div><div><b id="profileAccess">GUEST</b><span>ACCESS</span></div></div>
@@ -265,6 +268,7 @@
   <script src="data/first-signal.js"></script>
   <script src="data/god-tier.js"></script>
   <script src="data/hallow-night.js"></script>
+  <script src="data/hallow-knights.js"></script>
   <script src="data/last-sinner.js"></script>
   <script src="data/malfunction.js"></script>
   <script src="data/new-member.js"></script>
