@@ -6,10 +6,16 @@ const DEFAULT_BANNER = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
 const COIN_ICON = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g"><stop stop-color="#52e6ff"/><stop offset="1" stop-color="#766dff"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="#07101a" stroke="url(#g)" stroke-width="5"/><path d="M20 25h25M20 32h25M20 39h18" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`);
 
 // Virtual-only archive data. No real-money value is attached to credits.
-const roles = window.SSML_ROLES || [];
-const roleById = Object.fromEntries(roles.map(r => [r.id,r]));
+// All editable crate/role data lives in ONE folder: /data.
+const crateData = window.SSML_CRATE_DATA || [];
 const rarityPower = {COMMON:1,UNCOMMON:2,RARE:3,EPIC:4,LEGENDARY:5,MYTHIC:6,ULTRA:7,SPECIAL:0};
-const crates = window.SSML_CRATES || [];
+const roleMap = new Map();
+for (const c of crateData) for (const r of (c.roles || [])) if (!roleMap.has(r.id)) {
+  roleMap.set(r.id, { ...r, baseChance:Number(r.chance)||0, glow:r.color||'#ffffff', value:Number(r.price)||0, effect:r.effect||'Archive aura' });
+}
+const roles = [...roleMap.values()];
+const roleById = Object.fromEntries(roles.map(r => [r.id,r]));
+const crates = crateData.map(c => ({...c, pool:(c.roles||[]).map(r=>r.id)}));
 
 const STORAGE = "ssmlRareArchiveV4";
 function loadArchiveState(){
@@ -76,9 +82,12 @@ function rarityForCrate(r, c){
   return base*crateBoost;
 }
 function getCrateEntries(c){
-  const raw = c.pool.map(id=>role(id)).filter(Boolean).map(r=>({r,weight:rarityForCrate(r,c)}));
+  const raw = (c.roles||[]).map(r=>({
+    role:{...r,baseChance:Number(r.chance)||0,glow:r.color||'#ffffff',value:Number(r.price)||0,effect:r.effect||'Archive aura'},
+    weight:rarityForCrate({baseChance:Number(r.chance)||0,rarity:r.rarity},c)
+  }));
   const total = raw.reduce((a,x)=>a+x.weight,0);
-  return raw.map(x=>({role:x.r,chance:(x.weight/total)*100}));
+  return total>0 ? raw.map(x=>({role:x.role,chance:(x.weight/total)*100})) : [];
 }
 function weightedPick(c){
   const entries=getCrateEntries(c); let n=Math.random()*entries.reduce((a,x)=>a+x.chance,0);
@@ -319,6 +328,10 @@ function saveRoleEditor(){
   const name=$("#roleEditorName").value.trim(); const rarity=$("#roleEditorRarity").value; const color=$("#roleEditorColor").value.trim(); const chance=Number($("#roleEditorChance").value); const value=Number($("#roleEditorValue").value); const effect=$("#roleEditorEffect").value.trim();
   if(!name||!/^#[0-9a-fA-F]{6}$/.test(color)||!Number.isFinite(chance)||chance<0||!Number.isFinite(value)||value<0){alert("Check the role name, #RRGGBB color, chance, and value.");return;}
   r.name=name;r.rarity=rarity;r.glow=color;r.baseChance=chance;r.value=Math.floor(value);r.effect=effect||"Archive aura";
+  for(const c of crates){
+    const local=(c.roles||[]).find(x=>x.id===r.id);
+    if(local){ local.name=name; local.rarity=rarity; local.color=color; local.chance=chance; local.price=Math.floor(value); local.effect=r.effect; }
+  }
   save(); renderRoleEditor(r.id); $("#configSaved").textContent=`SAVED ${r.name}`; setTimeout(()=>$("#configSaved").textContent="",1600);
 }
 function renderCrateEditor(selectedId){

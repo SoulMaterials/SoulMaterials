@@ -1,8 +1,6 @@
-# SSML // RARE ARCHIVE
+# SSML Rare Archive — Simple Data Layout
 
-Static GitHub-ready virtual-credit archive prototype.
-
-## Folder layout
+There is only ONE data folder. Every crate has its own JavaScript file.
 
 ```text
 ssml-fixed/
@@ -10,65 +8,42 @@ ssml-fixed/
 ├── styles.css
 ├── app.js
 └── data/
-    ├── roles/
-    │   └── roles.js
-    └── crates/
-        └── crates.js
+    ├── first-signal.js
+    ├── new-member.js
+    ├── sinners-court.js
+    └── ... one file per crate
 ```
 
-## Editing titles / roles
-
-Open `data/roles/roles.js`.
-
-Each role uses:
-
-```js
-["role-id", "ROLE NAME", "RARITY", baseChance, sellValue, "#HEXCOLOR", "visual effect"]
-```
-
-- `ROLE NAME` = title shown on the site
-- `RARITY` = COMMON / UNCOMMON / RARE / EPIC / LEGENDARY / MYTHIC / ULTRA
-- `baseChance` = difficulty weight. Lower number = harder to roll.
-- `sellValue` = virtual credit value
-- `#HEXCOLOR` = glow and border color
-- `visual effect` = text describing the title effect
+## Editing a crate
+Open any file inside `data/`. Each file contains:
+- crate name
+- crate price
+- crate color
+- crate tier
+- description
+- the roles inside that crate
+- each role's name
+- rarity
+- `chance` (hardness/weight; lower = harder)
+- `color`
+- `price` (virtual sell value)
+- effect
 
 Example:
 
 ```js
-["void-king", "VOID KING", "MYTHIC", 0.003, 2500000, "#9b6cff", "Purple void crown"]
+{
+  "id": "sinners-faith",
+  "name": "Sinner's Faith",
+  "rarity": "RARE",
+  "chance": 2.5,
+  "color": "#ff3355",
+  "price": 800000,
+  "effect": "Crimson aura"
+}
 ```
 
-## Editing crates
+A smaller `chance` makes the role harder to roll. The website normalizes the roles in each crate to calculate the displayed odds.
 
-Open `data/crates/crates.js`.
-
-Each crate uses:
-
-```js
-["crate-id", "CRATE NAME", "mythic", 1000000, "Description", "#HEXCOLOR", ["role-id-1", "role-id-2"]]
-```
-
-Change the price, color, tier, description, and role pool without touching the main application.
-
-The roll system reads the selected role pool and uses each role's `baseChance` as its weight. Expensive crates are intentionally populated with stronger role pools and receive a small quality boost.
-
-## Administrative editor
-
-The site also has an ADMINISTRATIVE-only `EDITOR` button. It lets an administrative test account change role name, rarity, glow color, difficulty weight, sell value, effect, and crate settings in the current browser session.
-
-The code files remain the source of truth for a GitHub deployment.
-
-## Sign-in/storage
-
-The sign-in flow is intentionally defensive:
-
-- New accounts can be created from the first `WAIT!` gate.
-- Existing local accounts can sign in by username.
-- Uploaded profile images are resized/compressed before being stored, preventing most browser `localStorage` quota failures.
-- Invalid old archive data is ignored instead of crashing the entire page.
-- Old `ssmlRareArchiveV3` data is still read for migration.
-
-This is a frontend prototype. `localStorage` is browser-local. A real shared SSML site needs a server/database and real authentication before multiple visitors can share accounts, balances, inventories, or administrative permissions.
-
-All credits in this prototype are virtual and have no cash value.
+## Important
+The editor changes the current browser session only. A static GitHub page cannot rewrite its own `.js` files. To permanently save admin edits for every visitor, connect the site to a backend/database later.
