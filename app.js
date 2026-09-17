@@ -92,8 +92,12 @@ const crates = [
 ].map(([id,name,tier,cost,desc,accent,pool]) => ({id,name,tier,cost,desc,accent,pool}));
 
 const STORAGE = "ssmlRareArchiveV3";
-const old = JSON.parse(localStorage.getItem(STORAGE) || "null");
-const state = old || {
+let old = null;
+try { old = JSON.parse(localStorage.getItem(STORAGE) || "null"); } catch (error) {
+  console.warn("SSML archive storage was invalid. Starting a clean local archive.", error);
+  try { localStorage.removeItem(STORAGE); } catch (_) {}
+}
+const state = (old && typeof old === "object" && old.accounts && typeof old.accounts === "object") ? old : {
   activeUserId:null,
   accounts:{},
   activity:[],
@@ -118,6 +122,7 @@ function ensureAccountShape(a){
   a.avatar ||= DEFAULT_AVATAR; a.banner ||= DEFAULT_BANNER; a.bio ||= "No bio yet.";
   return a;
 }
+if (!state.accounts || typeof state.accounts !== "object") state.accounts = {};
 Object.values(state.accounts).forEach(ensureAccountShape);
 
 function rarityForCrate(r, c){
@@ -263,7 +268,26 @@ function sellTitle(id){
   a.inventory[id]--; if(a.inventory[id]<=0)delete a.inventory[id]; a.credits+=r.value; animateCurrency(r.value,"add"); log(`Sold "${r.name}" for ${money(r.value)} credits`,r.glow); save();
 }
 
-// Event wiring.
+function resetSignup(){
+  $("#signupStep1")?.classList.remove("hidden");
+  $("#signupStep2")?.classList.add("hidden");
+  $("#adminStep")?.classList.add("hidden");
+  $("#loginStep")?.classList.add("hidden");
+  $("#adminError") && ($("#adminError").textContent = "");
+}
+function openAuth(){
+  resetSignup();
+  $("#authGate")?.classList.add("hidden");
+  showModal("signupModal");
+}
+function signInExisting(){
+  const username=$("#loginUsername")?.value.trim();
+  if(!username){ alert("Enter your SSML username first."); return; }
+  const found=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
+  if(!found){ alert("No SSML account with that username exists in this browser yet. Create it with JOIN SSML NOW."); return; }
+  state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
+}
+function wireEvents(){
 $$("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.close)));
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
@@ -274,8 +298,9 @@ $("#closeResult").addEventListener("click",()=>closeModal("rollModal"));
 $("#openBackpack").addEventListener("click",()=>{closeModal("rollModal");switchPage("inventory")});
 $("#avatarInput").addEventListener("change",()=>readImage($("#avatarInput"),$("#avatarPreview")));
 $("#bannerInput").addEventListener("change",()=>readImage($("#bannerInput"),$("#bannerPreview")));
-$("#openSignup").addEventListener("click",()=>{showModal("signupModal");$("#signupStep1").classList.remove("hidden");$("#signupStep2").classList.add("hidden");$("#adminStep").classList.add("hidden")});
-$("#continueJoin").addEventListener("click",()=>{if(!$("#usernameInput").value.trim()){alert("Enter a username first.");return;}$("#signupStep1").classList.add("hidden");$("#signupStep2").classList.remove("hidden")});
+$("#openSignup")?.addEventListener("click",openAuth);
+$("#loginExisting")?.addEventListener("click",signInExisting);
+$("#continueJoin")?.addEventListener("click",()=>{if(!$("#usernameInput").value.trim()){alert("Enter a username first.");return;}$("#signupStep1").classList.add("hidden");$("#signupStep2").classList.remove("hidden")});
 $$("[data-access]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.access==="administrative"){$("#signupStep2").classList.add("hidden");$("#adminStep").classList.remove("hidden");}else completeProfile(b.dataset.access)}));
 $("#verifyAdmin").addEventListener("click",()=>{if($("#adminCode").value.trim()!=="SSML-ADMIN"){$("#adminError").textContent="Invalid proof code.";return;}completeProfile("administrative")});
 $("#profileBtn").addEventListener("click",()=>openProfile());
@@ -288,15 +313,29 @@ $("#adminSetCredits").addEventListener("click",()=>setAdminCredits("set"));
 $("#adminAddCredits").addEventListener("click",()=>{const n=Number($("#adminAmount").value);if(!Number.isFinite(n)||n<0){alert("Enter a valid amount first.");return;}const target=state.accounts[$("#adminTargetId").value];if(!target)return;$("#adminAmount").value=target.credits+Math.floor(n);setAdminCredits("set")});
 $("#adminSearchUsers").addEventListener("input",()=>{const q=$("#adminSearchUsers").value.trim().toLowerCase();const list=Object.values(state.accounts).filter(a=>a.username.toLowerCase().includes(q));$("#adminUserList").innerHTML=list.map(a=>`<button class="admin-user" data-admin-user="${a.id}"><span>${escapeHtml(a.username)}</span><small>${money(a.credits)} C</small></button>`).join("")||`<p class="muted">No users found.</p>`});
 $("#adminUserList").addEventListener("click",e=>{const b=e.target.closest("[data-admin-user]");if(b)openAdminPanel(b.dataset.adminUser)});
+}
 
-// If the old prototype state exists, migrate its single profile/inventory into the new account structure.
-(function migrateOld(){
-  if(state.accounts && Object.keys(state.accounts).length)return;
-  const legacy=JSON.parse(localStorage.getItem("ssmlArchiveState")||"null");
-  if(!legacy?.profile)return;
-  const p=legacy.profile, id=uid(); const a=ensureAccountShape({id,username:p.username,avatar:p.avatar,banner:p.banner,bio:p.bio,access:p.access,credits:legacy.credits||25000,inventory:legacy.inventory||{},activity:legacy.activity||[],titleId:p.access==="administrative"?"administrative":p.access==="guest"?"guest":"member"});
-  state.accounts[id]=a;state.activeUserId=id;save();
-})();
-
-if(account())$("#authGate").classList.add("hidden");else $("#authGate").classList.remove("hidden");
-renderAll();
+function bootSSML(){
+  try {
+    // Migrate the previous prototype before rendering or deciding whether the gate is needed.
+    (function migrateOld(){
+      if(state.accounts && Object.keys(state.accounts).length)return;
+      let legacy=null;
+      try { legacy=JSON.parse(localStorage.getItem("ssmlArchiveState")||"null"); } catch (_) {}
+      if(!legacy?.profile)return;
+      const p=legacy.profile, id=uid();
+      const a=ensureAccountShape({id,username:p.username,avatar:p.avatar,banner:p.banner,bio:p.bio,access:p.access,credits:legacy.credits||25000,inventory:legacy.inventory||{},activity:legacy.activity||[],titleId:p.access==="administrative"?"administrative":p.access==="guest"?"guest":"member"});
+      state.accounts[id]=a; state.activeUserId=id; save();
+    })();
+    wireEvents();
+    if(account()) $("#authGate")?.classList.add("hidden");
+    else $("#authGate")?.classList.remove("hidden");
+    renderAll();
+  } catch(error) {
+    console.error("SSML boot error:", error);
+    alert("SSML could not start correctly. The local archive data has been reset; refresh the page and try again.");
+    try { localStorage.removeItem(STORAGE); } catch (_) {}
+  }
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootSSML, {once:true});
+else bootSSML();
