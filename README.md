@@ -1,25 +1,28 @@
 # SSML // RARE ARCHIVE
 
-A static frontend prototype for the SSML title/crate concept.
+GitHub-ready static prototype for the SSML virtual-credit title/crate archive.
 
 ## Included
-- Sign-in gate and profile setup
-- Username, avatar, banner and bio
-- Guest / Member / Administrative access flow
-- Administrative proof screen
-- Virtual-credit crate system
-- Animated title roll
-- Rarity + odds viewer
-- Backpack with duplicate stacking
-- Virtual-credit selling with confirmation code
-- Profile modal with banner/avatar
-- Local activity feed
-- Neon/glow VFX styling
-- Responsive mobile layout
+
+- Fixed JavaScript syntax error from the original prototype.
+- 50+ collectible SSML titles with rarity, value, and individual glow/effect metadata.
+- 20 progressively more expensive crates; later crates use stronger rarity pools.
+- Animated crate rolling screen with skip button.
+- Crate VIEW screen showing the calculated odds for that crate.
+- Backpack with duplicate stacking (`x2`, `x3`, etc.).
+- Virtual-credit spend/add animations.
+- Sell confirmation using `SELL-SSML`.
+- Sign-up flow with username, avatar, banner, bio, and Guest/Member/Administrative choice.
+- Administrative verification using the demo code `SSML-ADMIN`.
+- Member search/directory and profile viewing.
+- Administrative profile controls to gift credits or set an exact virtual balance for an account.
+- Administrative control-room user search.
+- Profile backpack showing titles owned and duplicate counts.
 
 ## Important
-This prototype uses `localStorage`, so profile/inventory data is only saved in the visitor's browser. It is not real authentication and it does not synchronize users.
 
-For a real public site, connect authentication + a database (for example Supabase/Firebase) and perform all currency, inventory, admin verification, and sell operations server-side.
+This is a **frontend-only prototype**. Data is stored in `localStorage`, so accounts and balances are only shared inside the same browser/device. The administrative code is visible in client-side JavaScript and is **not secure authentication**.
 
-The crate currency in this prototype is virtual and has no cash value. Do not connect the sell mechanic to real-money cash-out without implementing the legal/compliance requirements that apply to your jurisdiction.
+For the real SSML site, replace the local storage layer with a backend/authentication service. Server-side authorization must verify administrative permissions before allowing credit changes, title ownership changes, or profile edits.
+
+Credits in this prototype are virtual and have no cash value.

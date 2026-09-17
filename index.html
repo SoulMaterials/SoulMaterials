@@ -35,6 +35,8 @@
       <button class="nav-btn" data-page="inventory">BACKPACK</button>
       <button class="nav-btn" data-page="activity">ACTIVITY</button>
     </nav>
+    <button id="directoryBtn" class="directory-btn" title="Search SSML members">SEARCH</button>
+    <button id="adminNav" class="admin-nav hidden" title="Administrative controls">ADMIN</button>
     <div class="top-actions">
       <div class="currency-pill"><img id="currencyIcon" alt=""><span id="credits">25,000</span><small> CREDITS</small></div>
       <button id="profileBtn" class="profile-chip">
@@ -89,7 +91,7 @@
       <button class="close" data-close="contentsModal">×</button>
       <p class="eyebrow" id="contentsEyebrow">CRATE CONTENTS</p>
       <h2 id="contentsTitle"></h2>
-      <div id="contentsList" class="odds-list"></div>
+      <div id="contentsList" class="odds-list"></div><p id="contentsNote" class="modal-note"></p>
     </div>
   </div>
 
@@ -161,7 +163,48 @@
         <div><p class="eyebrow">SSML MEMBER</p><h2 id="profileName"></h2><div id="profileTitle" class="title-badge"></div></div>
       </div>
       <p id="profileBio" class="profile-bio"></p>
+      <div class="profile-section-title">BACKPACK // TITLES WON</div><div id="profileInventory" class="profile-inventory"></div>
+      <input id="profileAdminTarget" type="hidden">
+      <div id="profileAdminTools" class="profile-admin-tools hidden"><span>ADMINISTRATIVE TOOLS</span><button id="profileAdminGive" class="primary-btn">GIVE CREDITS</button><button id="profileAdminSet" class="secondary-btn">SET CREDITS</button></div>
       <div class="profile-stats"><div><b id="profileOwned">0</b><span>TITLES</span></div><div><b id="profileCredits">0</b><span>CREDITS</span></div><div><b id="profileAccess">GUEST</b><span>ACCESS</span></div></div>
+    </div>
+  </div>
+
+  <div id="directoryModal" class="modal hidden">
+    <div class="modal-card directory-card">
+      <button class="close" data-close="directoryModal">×</button>
+      <p class="eyebrow">SSML // MEMBER SEARCH</p>
+      <h2>SEARCH THE ARCHIVE</h2>
+      <input id="directorySearch" class="search-input" placeholder="Search username..." autocomplete="off">
+      <div id="directoryResults" class="directory-results"></div>
+    </div>
+  </div>
+
+  <div id="giftModal" class="modal hidden">
+    <div class="modal-card admin-card">
+      <button class="close" data-close="giftModal">×</button>
+      <p class="eyebrow">ADMINISTRATIVE // CURRENCY</p>
+      <h2>GIVE CREDITS</h2>
+      <p class="muted">This changes virtual archive credits only.</p>
+      <input id="giftTargetId" type="hidden">
+      <label>AMOUNT<input id="giftAmount" type="number" min="1" step="1" placeholder="100000"></label>
+      <button id="giftCredits" class="primary-btn full">GIFT CREDITS →</button>
+      <p id="giftSuccess" class="success"></p>
+    </div>
+  </div>
+
+  <div id="adminModal" class="modal hidden">
+    <div class="modal-card admin-card">
+      <button class="close" data-close="adminModal">×</button>
+      <p class="eyebrow">ADMINISTRATIVE // CONTROL ROOM</p>
+      <h2>CURRENCY CONTROL</h2>
+      <p class="muted">Search a local archive account, then gift or directly set its virtual balance.</p>
+      <input id="adminTargetId" type="hidden">
+      <div class="admin-target"><div><small>TARGET</small><b id="adminTargetName">—</b></div><strong id="adminTargetCredits">0 C</strong></div>
+      <label>SEARCH USERS<input id="adminSearchUsers" class="search-input" placeholder="Find a username..."></label>
+      <div id="adminUserList" class="admin-user-list"></div>
+      <label>SET BALANCE<input id="adminAmount" type="number" min="0" step="1" placeholder="0"></label>
+      <div class="admin-buttons"><button id="adminAddCredits" class="secondary-btn">ADD AMOUNT</button><button id="adminSetCredits" class="primary-btn">SET EXACT BALANCE</button></div>
     </div>
   </div>
 
