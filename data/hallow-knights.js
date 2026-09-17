@@ -14,7 +14,7 @@ window.SSML_CRATE_DATA.push({
     image: "https://media.discordapp.net/attachments/1535462023402364938/1550251695710142616/content.png?ex=6aada7e6&is=6aac5666&hm=43a9b041daa0852e12438059610c74b738a535584aac953a0f90011cb676694c&=&format=webp&quality=lossless&width=1280&height=641",
 
     // CHANGE THE CRATE PRICE HERE
-    cost: 1,
+    cost: 9000000000000000,
 
     // CHANGE THE CRATE GLOW COLOR HERE
     accent: "#ff6a00",
@@ -47,25 +47,7 @@ window.SSML_CRATE_DATA.push({
                 "Forgotten Pumpkin Kishin — RGB rainbow aura flowing left, orange-and-black Halloween flames, spectral pumpkin fire, black-red smoke, and cursed saint glow"
         },
 
-        {
-            id: "saint-of-the-hallow-night-forgotten-pumpkin-kishin",
-
-            name: "H-E-A-D-L-E-S-S-H-O-R-S-E-K-I-S-H-I-N",
-
-            rarity: "ULTRA",
-
-            // EXTREMELY HARD TO GET
-            chance: 2,
-
-            // ROLE GLOW COLOR
-            color: "#9900ff",
-
-            // VIRTUAL SELL VALUE
-            price: 200000000,
-
-            effect:
-                "HorseMadness"
-        },
+        
 
         // =====================================================
         // OTHER HALLOW KNIGHTS ROLES

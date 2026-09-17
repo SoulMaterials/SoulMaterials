@@ -51,3 +51,28 @@ The credits in this project are virtual archive credits only and have no real-mo
 ## GitHub Pages
 
 The frontend can still be opened as a static site, but cross-device shared features require the Render Web Service and PostgreSQL connection.
+
+
+
+
+
+
+{
+            id: "saint-of-the-hallow-night-forgotten-pumpkin-kishin",
+
+            name: "H-E-A-D-L-E-S-S-H-O-R-S-E-K-I-S-H-I-N",
+
+            rarity: "ULTRA",
+
+            // EXTREMELY HARD TO GET
+            chance: 2,
+
+            // ROLE GLOW COLOR
+            color: "#9900ff",
+
+            // VIRTUAL SELL VALUE
+            price: 200000000,
+
+            effect:
+                "HorseMadness"
+        },
