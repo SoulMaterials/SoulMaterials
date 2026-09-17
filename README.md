@@ -24,7 +24,13 @@ For persistent shared data, connect a Render PostgreSQL database and add its int
 
 `DATABASE_URL`
 
-If `DATABASE_URL` is missing, the server uses temporary in-memory storage. That is useful for testing deployment, but data can disappear when the service restarts.
+If `DATABASE_URL` is missing, the server uses temporary in-memory storage. That is useful for testing deployment, but friends, accounts, follows, and credits can disappear when the service restarts. For real persistence across devices and restarts, connect a Render PostgreSQL database and set `DATABASE_URL`.
 
 Render's Node deploy docs: https://render.com/docs/deploy-node-express-app
 Render Postgres connection docs: https://render.com/docs/postgresql-creating-connecting
+
+
+## Shared username search and credit gifting
+The directory searches usernames from the shared server. Administrative accounts also get a GIFT button beside search results. Credit gifting and setting balances are sent to the server so the target's virtual balance is shared across devices.
+
+The friend endpoint stores both sides of the friendship in the `friends` JSONB fields, so the friend list remains available after refresh/restart when PostgreSQL is connected.

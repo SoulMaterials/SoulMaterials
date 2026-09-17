@@ -439,29 +439,96 @@ async function searchDirectory(){
       const data=await apiRequest(`/api/users?q=${encodeURIComponent(q)}`);
       data.users.forEach(mergeServerUser);
       const results=data.users;
-      $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");return `<button class="directory-user" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
+      $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");const admin=account()?.access==="administrative"?`<button class="directory-gift" data-gift-user="${a.id}">GIFT</button>`:"";return `<div class="directory-user"><button class="directory-user-main" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>${admin}</div>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
       return;
     }catch(err){ console.error(err); }
   }
   const results=Object.values(state.accounts).filter(a=>!q||a.username.toLowerCase().includes(q));
-  $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");return `<button class="directory-user" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
+  $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");const admin=account()?.access==="administrative"?`<button class="directory-gift" data-gift-user="${a.id}">GIFT</button>`:"";return `<div class="directory-user"><button class="directory-user-main" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>${admin}</div>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
 }
 
-function openAdminPanel(targetId=state.activeUserId){
+async function openAdminPanel(targetId=state.activeUserId){
   if(account()?.access!=="administrative")return;
-  const target=state.accounts[targetId]||account(); $("#adminTargetId").value=target.id; $("#adminTargetName").textContent=target.username; $("#adminTargetCredits").textContent=money(target.credits)+" C"; $("#adminAmount").value=""; showModal("adminModal");
+  if(serverMode && targetId) await refreshServerUser(targetId);
+  const target=state.accounts[targetId]||account();
+  if(!target)return;
+  $("#adminTargetId").value=target.id; $("#adminTargetName").textContent=target.username; $("#adminTargetCredits").textContent=money(target.credits)+" C"; $("#adminAmount").value="";
+  if(serverMode) await searchAdminUsers();
+  showModal("adminModal");
 }
-function setAdminCredits(mode){
-  if(account()?.access!=="administrative")return; const target=state.accounts[$("#adminTargetId").value]; if(!target)return;
-  const amount=Number($("#adminAmount").value); if(!Number.isFinite(amount)||amount<0){alert("Enter a valid non-negative amount.");return;}
-  const next=Math.floor(amount); const delta=next-target.credits; target.credits=next;
+async function setAdminCredits(mode){
+  const me=account();
+  if(me?.access!=="administrative")return;
+  const targetId=$("#adminTargetId").value;
+  const amount=Number($("#adminAmount").value);
+  if(!targetId||!Number.isFinite(amount)||amount<0){alert("Enter a valid non-negative amount.");return;}
+  const next=Math.floor(amount);
+  if(serverMode){
+    try{
+      const oldTarget=state.accounts[targetId];
+      const oldCredits=Number(oldTarget?.credits||0);
+      const data=await apiRequest("/api/admin/set-credits",{method:"POST",body:JSON.stringify({adminId:me.id,targetId,amount:next})});
+      const target=mergeServerUser(data.target);
+      $("#adminTargetCredits").textContent=money(target.credits)+" C";
+      if(target.id===state.activeUserId){const delta=next-oldCredits;$("#profileCredits").textContent=money(target.credits);animateCurrency(delta,delta>=0?"add":"spend");}
+      save();
+      return;
+    }catch(err){console.error(err);alert(err.status===403?"You do not have administrative permission on the shared server.":"Could not set credits right now.");return;}
+  }
+  const target=state.accounts[targetId]; if(!target)return;
+  const delta=next-target.credits; target.credits=next;
   log(`Administrative set ${target.username}'s credits to ${money(next)} C`,target.access==="administrative"?"#ff536e":"#ffd76b",target); save(); $("#adminTargetCredits").textContent=money(target.credits)+" C";
   if(target.id===state.activeUserId){$("#profileCredits").textContent=money(target.credits);animateCurrency(delta,delta>=0?"add":"spend");}
 }
-function giftCredits(){
-  if(account()?.access!=="administrative")return; const target=state.accounts[$("#giftTargetId").value]; const amount=Number($("#giftAmount").value);
-  if(!target||!Number.isFinite(amount)||amount<=0){alert("Choose a user and enter a positive amount.");return;}
-  const n=Math.floor(amount); target.credits+=n; log(`Administrative gifted ${money(n)} C to ${target.username}`,"#ffd76b",target); save(); if(target.id===state.activeUserId)animateCurrency(n,"add"); $("#giftSuccess").textContent=`GIFTED +${money(n)} C TO ${target.username}`; setTimeout(()=>$("#giftSuccess").textContent="",1800);
+async function searchAdminUsers(){
+  if(account()?.access!=="administrative")return;
+  const q=$("#adminSearchUsers")?.value.trim()||"";
+  if(serverMode){
+    try{
+      const data=await apiRequest(`/api/users?q=${encodeURIComponent(q)}`);
+      data.users.forEach(mergeServerUser);
+      renderAdminUserList(data.users);
+      return;
+    }catch(err){console.error(err);}
+  }
+  const list=Object.values(state.accounts).filter(a=>!q||a.username.toLowerCase().includes(q.toLowerCase())).slice(0,100);
+  renderAdminUserList(list);
+}
+function renderAdminUserList(list){
+  $("#adminUserList").innerHTML=list.length?list.map(a=>`<button class="admin-user" data-admin-user="${a.id}"><span>${escapeHtml(a.username)}</span><small>${money(a.credits)} C</small></button>`).join(""):`<p class="muted">No users found.</p>`;
+}
+async function giftCredits(){
+  const me=account();
+  if(me?.access!=="administrative")return;
+  const targetId=$("#giftTargetId").value;
+  const amount=Number($("#giftAmount").value);
+  if(!targetId||!Number.isFinite(amount)||amount<=0){alert("Choose a user and enter a positive amount.");return;}
+  const n=Math.floor(amount);
+  if(serverMode){
+    try{
+      const data=await apiRequest("/api/admin/gift",{method:"POST",body:JSON.stringify({adminId:me.id,targetId,amount:n})});
+      const target=mergeServerUser(data.target);
+      if(target.id===me.id) mergeServerUser(data.admin);
+      if(target.id===state.activeUserId) animateCurrency(n,"add");
+      $("#adminTargetId").value=target.id; $("#adminTargetName").textContent=target.username; $("#adminTargetCredits").textContent=money(target.credits)+" C";
+      $("#giftSuccess").textContent=`GIFTED +${money(n)} C TO ${target.username}`;
+      save();
+      setTimeout(()=>$("#giftSuccess").textContent="",1800);
+      return;
+    }catch(err){
+      console.error(err);
+      alert(err.status===403?"You do not have administrative permission on the shared server.":"Could not gift credits right now.");
+      return;
+    }
+  }
+  const target=state.accounts[targetId];
+  if(!target)return;
+  target.credits+=n;
+  log(`Administrative gifted ${money(n)} C to ${target.username}`,"#ffd76b",target);
+  save();
+  if(target.id===state.activeUserId)animateCurrency(n,"add");
+  $("#giftSuccess").textContent=`GIFTED +${money(n)} C TO ${target.username}`;
+  setTimeout(()=>$("#giftSuccess").textContent="",1800);
 }
 function sellTitle(id){
   const a=account(), r=role(id); if(!a||!r||!(a.inventory[id]>0))return;
@@ -597,14 +664,14 @@ $("#profileInventory").addEventListener("click",e=>{
 $("#profileFriends").addEventListener("click",e=>{
   const b=e.target.closest("[data-profile-user]"); if(b)openProfile(b.dataset.profileUser);
 });
-$("#directoryBtn").addEventListener("click",openDirectory); $("#directorySearch").addEventListener("input",searchDirectory); $("#directoryResults").addEventListener("click",e=>{const b=e.target.closest("[data-profile-user]");if(b){closeModal("directoryModal");openProfile(b.dataset.profileUser)}});
+$("#directoryBtn").addEventListener("click",openDirectory); $("#directorySearch").addEventListener("input",searchDirectory); $("#directoryResults").addEventListener("click",e=>{const gift=e.target.closest("[data-gift-user]");if(gift){e.stopPropagation();$("#giftTargetId").value=gift.dataset.giftUser;const target=state.accounts[gift.dataset.giftUser];$("#giftAmount").value="";showModal("giftModal");return;}const b=e.target.closest("[data-profile-user]");if(b){closeModal("directoryModal");openProfile(b.dataset.profileUser)}});
 $("#adminNav").addEventListener("click",()=>openAdminPanel());
 $("#profileAdminGive").addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");$("#giftTargetId").value=id;$("#giftAmount").value="";showModal("giftModal")});
 $("#profileAdminSet").addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");openAdminPanel(id)});
 $("#giftCredits").addEventListener("click",giftCredits);
 $("#adminSetCredits").addEventListener("click",()=>setAdminCredits("set"));
 $("#adminAddCredits").addEventListener("click",()=>{const n=Number($("#adminAmount").value);if(!Number.isFinite(n)||n<0){alert("Enter a valid amount first.");return;}const target=state.accounts[$("#adminTargetId").value];if(!target)return;$("#adminAmount").value=target.credits+Math.floor(n);setAdminCredits("set")});
-$("#adminSearchUsers").addEventListener("input",()=>{const q=$("#adminSearchUsers").value.trim().toLowerCase();const list=Object.values(state.accounts).filter(a=>a.username.toLowerCase().includes(q));$("#adminUserList").innerHTML=list.map(a=>`<button class="admin-user" data-admin-user="${a.id}"><span>${escapeHtml(a.username)}</span><small>${money(a.credits)} C</small></button>`).join("")||`<p class="muted">No users found.</p>`});
+$("#adminSearchUsers").addEventListener("input",searchAdminUsers);
 $("#adminUserList").addEventListener("click",e=>{const b=e.target.closest("[data-admin-user]");if(b)openAdminPanel(b.dataset.adminUser)});
 $("#archiveEditorNav")?.addEventListener("click",openConfig);
 $("#roleEditorSelect")?.addEventListener("change",loadRoleEditor);

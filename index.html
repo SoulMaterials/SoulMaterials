@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>SSML // RARE ARCHIVE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,7 +205,7 @@
       <button class="close" data-close="adminModal">×</button>
       <p class="eyebrow">ADMINISTRATIVE // CONTROL ROOM</p>
       <h2>CURRENCY CONTROL</h2>
-      <p class="muted">Search a local archive account, then gift or directly set its virtual balance.</p>
+      <p class="muted">Search the shared SSML accounts by username, then gift or directly set virtual credits.</p>
       <input id="adminTargetId" type="hidden">
       <div class="admin-target"><div><small>TARGET</small><b id="adminTargetName">—</b></div><strong id="adminTargetCredits">0 C</strong></div>
       <label>SEARCH USERS<input id="adminSearchUsers" class="search-input" placeholder="Find a username..."></label>
@@ -220,7 +220,7 @@
       <button class="close" data-close="configModal">×</button>
       <p class="eyebrow">ADMINISTRATIVE // ARCHIVE CONFIG</p>
       <h2>ARCHIVE EDITOR</h2>
-      <p class="muted">Crates and titles are separated into <b>data/roles/</b> and <b>data/crates/</b>. These controls edit the current browser copy for testing.</p>
+      <p class="muted">Crates and titles live in one <b>data/</b> folder, with one file per crate. These controls edit the current browser copy for testing.</p>
       <div class="config-tabs"><button class="config-tab active" data-config-tab="roleConfig">ROLE / TITLE</button><button class="config-tab" data-config-tab="crateConfig">CRATE</button></div>
       <section id="roleConfig" class="config-panel">
         <label>ROLE / TITLE<select id="roleEditorSelect" class="search-input"></select></label>
@@ -245,7 +245,7 @@
         </div>
         <label>DESCRIPTION<textarea id="crateEditorDesc" maxlength="220"></textarea></label>
         <label>ROLE IDS IN THIS CRATE<textarea id="crateEditorPool" class="pool-editor" placeholder="guest, member, sinners-faith, ..."></textarea></label>
-        <p class="tiny-note">Use role IDs from <b>data/roles/roles.js</b>. The roll system uses each title's base chance as its weight inside the selected crate.</p>
+        <p class="tiny-note">Use role IDs from the crate files in <b>data/</b>. The roll system uses each title's base chance as its weight inside the selected crate.</p>
         <button id="saveCrateEditor" class="primary-btn full">SAVE CRATE CONFIG</button>
       </section>
       <p id="configSaved" class="success"></p>

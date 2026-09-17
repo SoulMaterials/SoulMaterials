@@ -205,6 +205,33 @@ app.post('/api/users/:id/friend', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Could not update friendship.' }); }
 });
 
+app.post('/api/admin/gift', async (req, res) => {
+  try {
+    const admin = await findById(String(req.body?.adminId || ''));
+    const target = await findById(String(req.body?.targetId || ''));
+    const amount = Number(req.body?.amount);
+    if (!admin || admin.access !== 'administrative') return res.status(403).json({ error: 'Administrative access required.' });
+    if (!target || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Choose a valid user and positive amount.' });
+    const n = Math.floor(amount);
+    target.credits = Number(target.credits || 0) + n;
+    await saveUser(target);
+    res.json({ admin: cleanUser(admin), target: cleanUser(target), gifted: n });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Could not gift credits.' }); }
+});
+
+app.post('/api/admin/set-credits', async (req, res) => {
+  try {
+    const admin = await findById(String(req.body?.adminId || ''));
+    const target = await findById(String(req.body?.targetId || ''));
+    const amount = Number(req.body?.amount);
+    if (!admin || admin.access !== 'administrative') return res.status(403).json({ error: 'Administrative access required.' });
+    if (!target || !Number.isFinite(amount) || amount < 0) return res.status(400).json({ error: 'Choose a valid user and non-negative amount.' });
+    target.credits = Math.floor(amount);
+    await saveUser(target);
+    res.json({ admin: cleanUser(admin), target: cleanUser(target) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Could not set credits.' }); }
+});
+
 app.post('/api/users/:id/profile', async (req, res) => {
   try {
     const user = await findById(req.params.id);
