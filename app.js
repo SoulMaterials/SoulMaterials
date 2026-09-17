@@ -6,158 +6,51 @@ const DEFAULT_BANNER = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
 const COIN_ICON = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g"><stop stop-color="#52e6ff"/><stop offset="1" stop-color="#766dff"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="#07101a" stroke="url(#g)" stroke-width="5"/><path d="M20 25h25M20 32h25M20 39h18" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`);
 
 // Virtual-only archive data. No real-money value is attached to credits.
-const roles = [
-  ["guest","Guest","COMMON",50,100,"#5dff9b","Green arrival aura"],
-  ["new-blood","New Blood","COMMON",22,250,"#52e6ff","Soft cyan trail"],
-  ["known","Known","COMMON",12,700,"#7be7ff","Blue name pulse"],
-  ["member","Member","UNCOMMON",7,1500,"#9b6cff","Purple ring"],
-  ["administrative","Administrative","SPECIAL",0,0,"#ff536e","Red command aura"],
-  ["academy","Academy","RARE",4,5000,"#ffd76b","Golden sparks"],
-  ["sinners-faith","Sinner's Faith","RARE",2.5,10000,"#ff536e","Crimson aura"],
-  ["ruination","Ruination","EPIC",1,25000,"#d36cff","Fractured violet"],
-  ["hallow-night","Hallow Night","EPIC",.5,50000,"#ff8b52","Halloween flame"],
-  ["royal-gathering","Royal Gathering","LEGENDARY",.2,100000,"#fff0a6","Royal gold halo"],
-  ["no-company","NO COMPANY","MYTHIC",.1,200000,"#ffffff","White void aura"],
-  ["void-saint","Void Saint","MYTHIC",.05,350000,"#b58cff","Void wings"],
-  ["you-and-i-forever","You and I Forever","ULTRA",.01,800000,"#ff4bdb","Twin-eye aura"],
-  ["frost-walker","Frost Walker","UNCOMMON",6,2200,"#72d9ff","Frozen footsteps"],
-  ["bell-ringer","Bell Ringer","RARE",3,7500,"#ffcf66","Bell shockwave"],
-  ["shadow-hunter","Shadow Hunter","RARE",2.2,9000,"#8b7cff","Shadow cloak"],
-  ["weeping-queen","Weeping Queen","EPIC",.8,30000,"#67d9ff","Rainfall crown"],
-  ["crying-soldier","Crying Soldier","EPIC",.7,35000,"#7ea4ff","Blue tear particles"],
-  ["solar","Solar","LEGENDARY",.18,125000,"#ffb347","Solar flare"],
-  ["forever","Forever","LEGENDARY",.12,175000,"#ff6bcb","Infinite heart loop"],
-  ["the-knight","The Knight","MYTHIC",.06,325000,"#dfe7ff","Steel phantom"],
-  ["artist-experiment-557","Artist Experiment 557","MYTHIC",.04,450000,"#ff66ff","RGB brush burst"],
-  ["luckus","Luckus","ULTRA",.015,650000,"#7dffbd","Luck constellation"],
-  ["ormnikakkishin","Ormnikakkishin","ULTRA",.01,900000,"#ff3864","Glitched red orbit"],
-  ["weeping-angel","Weeping Angel","MYTHIC",.07,280000,"#e9efff","Stone-wing pulse"],
-  ["black-crown","Black Crown","LEGENDARY",.16,140000,"#d9d9ff","Dark crown halo"],
-  ["red-moon","Red Moon","EPIC",.65,42000,"#ff455c","Lunar eclipse"],
-  ["voidborn","Voidborn","MYTHIC",.045,500000,"#8e6bff","Void particles"],
-  ["star-mid","Star-mid","LEGENDARY",.11,180000,"#ffffff","White stars + username aura"],
-  ["angelic-praise","Angelic Praise","ULTRA",.012,1000000,"#ffffff","Large wings + halo"],
-  ["eye-of-the-archive","Eye of the Archive","MYTHIC",.055,375000,"#4df5ff","Floating eye sigil"],
-  ["malfunction","Malfunction","ULTRA",.02,950000,"#ff315f","RGB corruption"],
-  ["soul-eater","Soul Eater","MYTHIC",.05,420000,"#ff335c","Soul flame"],
-  ["dark-rpg","Dark RPG","EPIC",.6,60000,"#a87cff","RPG rune field"],
-  ["hunting-horn","Hunting Horn","RARE",2.1,11000,"#f2c27b","Resonance rings"],
-  ["sinners-court","Sinners Court","LEGENDARY",.13,160000,"#ff5a6e","Crimson throne"],
-  ["hallow-king","Hallow King","MYTHIC",.045,400000,"#ff984d","Cursed crown"],
-  ["hallow-queen","Hallow Queen","MYTHIC",.04,425000,"#ff6bd6","Cursed veil"],
-  ["academy-legend","Academy Legend","LEGENDARY",.14,145000,"#ffd76b","Golden school crest"],
-  ["ruined-scholar","Ruined Scholar","EPIC",.55,55000,"#a58bff","Broken book sigils"],
-  ["purple-fang","Purple Fang","RARE",2,8500,"#b66cff","Fanged purple glow"],
-  ["crimson-royal","Crimson Royal","LEGENDARY",.1,210000,"#ff536e","Royal red aura"],
-  ["white-void","White Void","MYTHIC",.035,550000,"#f8fbff","Blinding void ring"],
-  ["golden-saint","Golden Saint","MYTHIC",.03,600000,"#ffe58a","Saint halo"],
-  ["nightmare","Nightmare","EPIC",.45,70000,"#b35cff","Nightmare smoke"],
-  ["broken-angel","Broken Angel","LEGENDARY",.12,240000,"#d6e0ff","Cracked halo"],
-  ["fallen-star","Fallen Star","MYTHIC",.035,575000,"#8ddcff","Falling star trail"],
-  ["eternal","Eternal","ULTRA",.012,1100000,"#ffffff","Eternal RGB crown"],
-  ["hollow-kingdom","Hollow Kingdom","ULTRA",.009,1250000,"#a8a8ff","Kingdom void field"],
-  ["the-last-sinner","The Last Sinner","ULTRA",.008,1500000,"#ff294f","Final crimson mark"],
-  ["ssml-ancient","SSML Ancient","MYTHIC",.025,700000,"#72ffff","Ancient archive runes"],
-  ["archive-keeper","Archive Keeper","LEGENDARY",.1,250000,"#8fe4ff","Orbiting archive keys"],
-  ["royal-keeper","Royal Keeper","MYTHIC",.025,725000,"#ffe7a1","Royal key aura"],
-  ["company-breaker","Company Breaker","ULTRA",.007,1750000,"#ffffff","Shattered white logo"],
-  ["god-of-the-archive","God of the Archive","ULTRA",.003,2500000,"#ffffff","Massive celestial aura"],
-  ["unknown","UNKNOWN","ULTRA",.001,5000000,"#ff00ff","Reality-error aura"]
-].map(([id,name,rarity,baseChance,value,glow,effect]) => ({id,name,rarity,baseChance,value,glow,effect}));
-
-const EXTRA_ROLES = [
-  ["grave-scribe","Grave Scribe","EPIC",0.4,90000,"#8b8cff","Floating grave-script glyphs"],
-  ["blood-moon","Blood Moon","LEGENDARY",0.09,300000,"#ff244f","Blood-moon eclipse"],
-  ["void-prince","Void Prince","MYTHIC",0.018,950000,"#a46bff","Purple void crown"],
-  ["void-emperor","Void Emperor","ULTRA",0.006,2200000,"#7b5cff","Expanding void crown"],
-  ["celestial-sinner","Celestial Sinner","ULTRA",0.004,3000000,"#fff1ff","Black-winged halo"],
-  ["fallen-king","Fallen King","MYTHIC",0.02,1100000,"#9d8cff","Broken throne aura"],
-  ["fallen-emperor","Fallen Emperor","ULTRA",0.004,4000000,"#ff496d","Imperial fracture aura"],
-  ["sinners-apocalypse","Sinner's Apocalypse","ULTRA",0.002,5000000,"#ff1f45","Crimson apocalypse field"],
-  ["endless-night","Endless Night","MYTHIC",0.016,1300000,"#6670ff","Endless night sky"],
-  ["nightmare-god","Nightmare God","ULTRA",0.0025,6500000,"#a34cff","Nightmare galaxy"],
-  ["godslayer","Godslayer","ULTRA",0.0018,7500000,"#ff5a5a","Divine blade flare"],
-  ["heaven-breaker","Heaven Breaker","ULTRA",0.0012,9000000,"#ffffff","Heaven-splitting beam"],
-  ["hell-crowned","Hell-Crowned","ULTRA",0.001,10000000,"#ff3d21","Infernal crown"],
-  ["absolute-void","Absolute Void","ULTRA",0.0007,15000000,"#d9d9ff","Absolute void distortion"],
-  ["eternal-king","Eternal King","ULTRA",0.0005,20000000,"#ffe99a","Eternal royal halo"],
-  ["archive-deity","Archive Deity","ULTRA",0.00035,30000000,"#67f6ff","Infinite archive orbit"],
-  ["ssml-overlord","SSML Overlord","ULTRA",0.0002,50000000,"#ff4dce","Overlord RGB storm"],
-  ["final-judgement","FINAL JUDGEMENT","ULTRA",0.00012,75000000,"#ffffff","Judgement sigil"],
-  ["end-of-archive","END OF THE ARCHIVE","ULTRA",0.00008,100000000,"#ff2e5e","Archive collapse"],
-  ["one-in-a-billion","ONE IN A BILLION","ULTRA",0.00002,250000000,"#00ffff","One-in-a-billion aura"],
-  ["absolute-saint","ABSOLUTE SAINT","ULTRA",0.00001,500000000,"#fff4cf","Six-wing saint aura"],
-  ["god-of-ssml","GOD OF SSML","ULTRA",0.000005,1000000000,"#ffffff","Massive celestial field"],
-  ["reality-ended","REALITY ENDED","ULTRA",0.000002,2500000000,"#ff00ff","Reality tear"],
-  ["beyond-divine","BEYOND DIVINE","ULTRA",0.000001,5000000000,"#7fffff","Beyond-divine distortion"],
-  ["final-file","FINAL FILE","ULTRA",0.0000005,10000000000,"#fff","Archive terminal glow"],
-  ["saint-god-coin","SAINT GOD","ULTRA",0.0000002,25000000000,"#ffd66b","Saint-god coin halo"],
-  ["9999","9999","ULTRA",0.0000001,99999999999,"#ff00ff","Numerical reality glitch"],
-  ["the-finalline","THE FINAL LINE","ULTRA",0.00000005,250000000000,"#ffffff","Final-line beam"],
-  ["hollow-deity","HOLLOW DEITY","ULTRA",0.00000003,500000000000,"#bbaaff","Hollow divine wings"],
-  ["absolute-end","ABSOLUTE END","ULTRA",0.00000001,1000000000000,"#ff315f","Absolute end aura"]
-].map(([id,name,rarity,baseChance,value,glow,effect]) => ({id,name,rarity,baseChance,value,glow,effect}));
-roles.push(...EXTRA_ROLES);
-
+const roles = window.SSML_ROLES || [];
 const roleById = Object.fromEntries(roles.map(r => [r.id,r]));
-const rarityPower = {COMMON:1,UNCOMMON:2,RARE:3,EPIC:4,LEGENDARY:5,MYTHIC:6,ULTRA:7};
+const rarityPower = {COMMON:1,UNCOMMON:2,RARE:3,EPIC:4,LEGENDARY:5,MYTHIC:6,ULTRA:7,SPECIAL:0};
+const crates = window.SSML_CRATES || [];
 
-const crates = [
-  ["first-signal","FIRST SIGNAL","starter",500,"The safest entry into the archive.","#52e6ff",["guest","new-blood","known","member","frost-walker"]],
-  ["new-member","NEW MEMBER DROP","starter",1200,"Starter titles with a few better surprises.","#5dff9b",["new-blood","known","member","frost-walker","purple-fang"]],
-  ["academy-files","ACADEMY FILES","rare",4000,"Academy records and early rare titles.","#ffd76b",["member","academy","academy-legend","ruined-scholar","bell-ringer","sinners-faith"]],
-  ["dark-rare","DARK RARE","rare",7500,"The first serious hunt for rare archive names.","#9b6cff",["academy","sinners-faith","purple-fang","shadow-hunter","bell-ringer","ruination"]],
-  ["hallow-night","HALLOW NIGHT","rare",12000,"Cursed seasonal records.","#ff8b52",["hallow-night","hallow-king","hallow-queen","red-moon","nightmare","ruination"]],
-  ["shadow-vault","SHADOW VAULT","rare",18000,"A darker crate built around shadow titles.","#765cff",["shadow-hunter","ruination","weeping-queen","crying-soldier","nightmare","soul-eater"]],
-  ["royal-gathering","ROYAL GATHERING","mythic",30000,"Ceremonial titles begin here.","#fff0a6",["royal-gathering","black-crown","academy-legend","sinners-court","crimson-royal","royal-keeper"]],
-  ["sinners-court","SINNER'S COURT","mythic",50000,"High-tier crimson archive records.","#ff536e",["sinners-faith","sinners-court","crimson-royal","hallow-king","void-saint","no-company"]],
-  ["void-archive","VOID ARCHIVE","mythic",80000,"The archive starts fighting back.","#b58cff",["ruination","no-company","void-saint","voidborn","white-void","eye-of-the-archive"]],
-  ["starfall","STARFALL","mythic",125000,"Celestial names and violent light effects.","#ffffff",["star-mid","fallen-star","solar","broken-angel","weeping-angel","void-saint"]],
-  ["angelic-vault","ANGELIC VAULT","mythic",175000,"Halo, wing and celestial records.","#dce8ff",["angelic-praise","broken-angel","weeping-angel","golden-saint","star-mid","solar"]],
-  ["malfunction","MALFUNCTION","mythic",250000,"Corrupted titles with RGB archive effects.","#ff315f",["malfunction","artist-experiment-557","ormnikakkishin","unknown","star-mid","no-company"]],
-  ["ancient-ssml","ANCIENT SSML","mythic",350000,"Titles pulled from the oldest records.","#72ffff",["ssml-ancient","archive-keeper","royal-keeper","voidborn","the-knight","artist-experiment-557"]],
-  ["soul-forge","SOUL FORGE","mythic",500000,"Heavy effects, heavy prices.","#ff335c",["soul-eater","dark-rpg","crying-soldier","weeping-queen","hallow-king","the-knight"]],
-  ["eternal-vault","ETERNAL VAULT","mythic",750000,"The expensive route toward ultra-rare names.","#ff6bcb",["forever","eternal","luckus","you-and-i-forever","angelic-praise","malfunction"]],
-  ["god-tier","GOD TIER","mythic",1000000,"Almost everything here is brutally rare.","#ffffff",["the-knight","voidborn","golden-saint","fallen-star","ssml-ancient","company-breaker"]],
-  ["last-sinner","LAST SINNER","mythic",1500000,"Endgame crimson records.","#ff294f",["the-last-sinner","crimson-royal","white-void","hollow-kingdom","company-breaker","god-of-the-archive"]],
-  ["company-breaker","COMPANY BREAKER","mythic",2500000,"The archive's absurdly expensive endgame crate.","#f7f7ff",["no-company","company-breaker","god-of-the-archive","unknown","hollow-kingdom","the-last-sinner"]],
-  ["ancient-god","ANCIENT GOD","mythic",5000000,"For collectors chasing the deepest records.","#a77bff",["god-of-the-archive","unknown","company-breaker","hollow-kingdom","eternal","angelic-praise"]],
-  ["unknown-file","UNKNOWN FILE","mythic",10000000,"The highest-cost crate currently in the prototype.","#ff00ff",["unknown","god-of-the-archive","company-breaker","the-last-sinner","hollow-kingdom"]]
-].map(([id,name,tier,cost,desc,accent,pool]) => ({id,name,tier,cost,desc,accent,pool}));
-
-crates.push(
-  ["royal-vault","ROYAL VAULT","mythic",900000,"A royal vault with serious endgame titles.","#ffe7a1",["royal-keeper","golden-saint","eternal","fallen-king","void-prince","celestial-sinner"]],
-  ["divine-vault","DIVINE VAULT","mythic",1250000,"Divine titles begin appearing in the pool.","#ffffff",["golden-saint","angelic-praise","fallen-emperor","heaven-breaker","absolute-saint","god-of-ssml"]],
-  ["apocalypse","APOCALYPSE","mythic",2000000,"Apocalyptic records and violent effects.","#ff315f",["sinners-apocalypse","nightmare-god","godslayer","fallen-emperor","the-last-sinner","heaven-breaker"]],
-  ["overlord","OVERLORD","mythic",3500000,"Only the archive's highest classes belong here.","#ff4dce",["void-emperor","ssml-overlord","archive-deity","eternal-king","god-of-the-archive","company-breaker"]],
-  ["absolute","ABSOLUTE","mythic",5000000,"The first absurd-tier crate.","#00ffff",["absolute-void","archive-deity","reality-ended","beyond-divine","god-of-ssml","final-judgement"]],
-  ["end-game","END GAME","mythic",10000000,"End-game archive records.","#ff2e5e",["end-of-archive","one-in-a-billion","final-file","the-last-sinner","god-of-ssml","reality-ended"]],
-  ["beyond-divine","BEYOND DIVINE","mythic",25000000,"A crate for titles that should barely exist.","#7fffff",["beyond-divine","absolute-saint","hollow-deity","final-judgement","the-finalline","god-of-ssml"]],
-  ["saint-god","SAINT GOD","mythic",50000000,"Near-terminal rarity pool.","#ffd66b",["saint-god-coin","eternal-king","absolute-saint","archive-deity","god-of-ssml","hollow-deity"]],
-  ["reality-breaker","REALITY BREAKER","mythic",100000000,"Reality-breaking endgame titles.","#ff00ff",["reality-ended","beyond-divine","absolute-end","one-in-a-billion","the-finalline","god-of-ssml"]],
-  ["final-archive","FINAL ARCHIVE","mythic",250000000,"The final public prototype crate.","#ffffff",["absolute-end","final-file","end-of-archive","the-finalline","hollow-deity","one-in-a-billion"]],
-  ["terminal","TERMINAL","mythic",1000000000,"Terminal archive. Almost nothing survives the roll.","#ff315f",["the-finalline","absolute-end","reality-ended","beyond-divine","god-of-ssml","final-file"]]
-).forEach(([id,name,tier,cost,desc,accent,pool])=>crates.push({id,name,tier,cost,desc,accent,pool}));
-
-const STORAGE = "ssmlRareArchiveV3";
-let old = null;
-try { old = JSON.parse(localStorage.getItem(STORAGE) || "null"); } catch (error) {
-  console.warn("SSML archive storage was invalid. Starting a clean local archive.", error);
-  try { localStorage.removeItem(STORAGE); } catch (_) {}
+const STORAGE = "ssmlRareArchiveV4";
+function loadArchiveState(){
+  const keys=[STORAGE,"ssmlRareArchiveV3"];
+  for(const key of keys){
+    try{
+      const raw=localStorage.getItem(key);
+      if(!raw) continue;
+      const parsed=JSON.parse(raw);
+      if(parsed && typeof parsed === "object" && parsed.accounts && typeof parsed.accounts === "object") return parsed;
+    }catch(error){
+      console.warn("Ignoring invalid SSML local archive data.",error);
+    }
+  }
+  return {activeUserId:null,accounts:{},activity:[],guestSeeded:false};
 }
-const state = (old && typeof old === "object" && old.accounts && typeof old.accounts === "object") ? old : {
-  activeUserId:null,
-  accounts:{},
-  activity:[],
-  guestSeeded:false
-};
+const state = loadArchiveState();
 let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
 
 function uid(){ return "u_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function money(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString(); }
 function account(){ return state.accounts[state.activeUserId] || null; }
 function role(id){ return roleById[id]; }
-function save(){ localStorage.setItem(STORAGE,JSON.stringify(state)); renderAll(); }
+function save(){
+  try{
+    localStorage.setItem(STORAGE,JSON.stringify(state));
+  }catch(error){
+    console.error("SSML archive save failed",error);
+    // Keep the UI alive even if a browser blocks storage or its quota is full.
+    try{
+      const lightweight={activeUserId:state.activeUserId,accounts:{},activity:state.activity.slice(0,20),guestSeeded:state.guestSeeded};
+      for(const [id,a] of Object.entries(state.accounts)){
+        lightweight.accounts[id]={...a,activity:[],avatar:DEFAULT_AVATAR,banner:DEFAULT_BANNER};
+      }
+      localStorage.setItem(STORAGE,JSON.stringify(lightweight));
+    }catch(_){
+      console.warn("SSML is running in memory because browser storage is unavailable.");
+    }
+  }
+  renderAll();
+}
 function timeNow(){ return new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
 function escapeHtml(value){ return String(value ?? "").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c])); }
 function rarityRank(r){ return rarityPower[r] || 0; }
@@ -174,9 +67,13 @@ if (!state.accounts || typeof state.accounts !== "object") state.accounts = {};
 Object.values(state.accounts).forEach(ensureAccountShape);
 
 function rarityForCrate(r, c){
-  const distance = Math.max(0, rarityRank(r.rarity) - 1);
-  const quality = Math.max(1, Math.log10(c.cost + 10));
-  return Math.max(.0002, (1 / Math.pow(2.05,distance)) * (0.65 + quality / 8));
+  // baseChance is the editable difficulty weight for the title. Lower means harder.
+  // The crate's price also gives higher-tier crates a gentle quality bonus without
+  // overriding the title's configured rarity/chance.
+  const base=Math.max(0.000000001,Number(r.baseChance)||0.000000001);
+  const quality=Math.max(1,Math.log10(c.cost+10));
+  const crateBoost=1+(quality/14)*((rarityRank(r.rarity)||1)/7);
+  return base*crateBoost;
 }
 function getCrateEntries(c){
   const raw = c.pool.map(id=>role(id)).filter(Boolean).map(r=>({r,weight:rarityForCrate(r,c)}));
@@ -219,7 +116,9 @@ function renderAll(){
   $("#credits").textContent=money(a?.credits||0); $("#currencyIcon").src=COIN_ICON;
   $("#navName").textContent=a?.username||"GUEST"; $("#navAvatar").src=a?.avatar||DEFAULT_AVATAR;
   $("#titleCount").textContent=roles.length; renderCrates($(".filter.active")?.dataset.filter||"all"); renderInventory(); renderActivity();
-  $("#adminNav")?.classList.toggle("hidden",a?.access!=="administrative");
+  const isAdmin=a?.access==="administrative";
+  $("#adminNav")?.classList.toggle("hidden",!isAdmin);
+  $("#archiveEditorNav")?.classList.toggle("hidden",!isAdmin);
 }
 function showModal(id){$("#"+id)?.classList.remove("hidden");}
 function closeModal(id){$("#"+id)?.classList.add("hidden");}
@@ -309,7 +208,30 @@ function finishRoll(r){
 function cNameSafe(name){return String(name||"this crate").replace(/[<>]/g,"");}
 
 function switchPage(page){ $$(".page").forEach(x=>x.classList.remove("active")); $("#"+page+"Page")?.classList.add("active"); $$(".nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.page===page)); }
-function readImage(input,img){const f=input.files?.[0]; if(!f)return; if(f.size>4*1024*1024){alert("Please use an image under 4 MB.");input.value="";return;} const r=new FileReader(); r.onload=()=>img.src=r.result; r.readAsDataURL(f);}
+function readImage(input,img){
+  const f=input.files?.[0]; if(!f)return;
+  if(!f.type.startsWith("image/")){alert("Please choose an image file.");input.value="";return;}
+  if(f.size>12*1024*1024){alert("Please use an image under 12 MB.");input.value="";return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const source=new Image();
+    source.onload=()=>{
+      const maxSide=input.id==="bannerInput"?1400:700;
+      const scale=Math.min(1,maxSide/Math.max(source.naturalWidth,source.naturalHeight));
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(source.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(source.naturalHeight*scale));
+      const ctx=canvas.getContext("2d");
+      ctx.drawImage(source,0,0,canvas.width,canvas.height);
+      let quality=.82; let data=canvas.toDataURL("image/jpeg",quality);
+      while(data.length>520000 && quality>.45){quality-=.07;data=canvas.toDataURL("image/jpeg",quality);}
+      img.src=data;
+    };
+    source.onerror=()=>alert("That image could not be read.");
+    source.src=reader.result;
+  };
+  reader.readAsDataURL(f);
+}
 
 function completeProfile(access){
   const username=$("#usernameInput").value.trim();
@@ -363,8 +285,9 @@ function resetSignup(){
   $("#signupStep1")?.classList.remove("hidden");
   $("#signupStep2")?.classList.add("hidden");
   $("#adminStep")?.classList.add("hidden");
-  $("#loginStep")?.classList.add("hidden");
   $("#adminError") && ($("#adminError").textContent = "");
+  $("#adminCode") && ($("#adminCode").value = "");
+  $("#loginUsername") && ($( "#loginUsername").value = "");
 }
 function openAuth(){
   resetSignup();
@@ -378,13 +301,68 @@ function signInExisting(){
   if(!found){ alert("No SSML account with that username exists in this browser yet. Create it with JOIN SSML NOW."); return; }
   state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
 }
+
+function renderRoleEditor(selectedId){
+  const select=$("#roleEditorSelect"); if(!select)return;
+  select.innerHTML=roles.filter(r=>r.id!=="administrative").map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} — ${r.rarity} — ${r.baseChance}%</option>`).join("");
+  if(selectedId)select.value=selectedId;
+  loadRoleEditor();
+}
+function loadRoleEditor(){
+  const r=role($("#roleEditorSelect")?.value); if(!r)return;
+  $("#roleEditorName").value=r.name; $("#roleEditorRarity").value=r.rarity; $("#roleEditorColor").value=r.glow; $("#roleEditorChance").value=r.baseChance; $("#roleEditorValue").value=r.value; $("#roleEditorEffect").value=r.effect;
+  $("#roleEditorPreview").textContent=r.name; $("#roleEditorPreview").style.color=r.glow; $("#roleEditorPreview").style.textShadow=`0 0 18px ${r.glow}`;
+}
+function saveRoleEditor(){
+  if(account()?.access!=="administrative")return;
+  const r=role($("#roleEditorSelect")?.value); if(!r)return;
+  const name=$("#roleEditorName").value.trim(); const rarity=$("#roleEditorRarity").value; const color=$("#roleEditorColor").value.trim(); const chance=Number($("#roleEditorChance").value); const value=Number($("#roleEditorValue").value); const effect=$("#roleEditorEffect").value.trim();
+  if(!name||!/^#[0-9a-fA-F]{6}$/.test(color)||!Number.isFinite(chance)||chance<0||!Number.isFinite(value)||value<0){alert("Check the role name, #RRGGBB color, chance, and value.");return;}
+  r.name=name;r.rarity=rarity;r.glow=color;r.baseChance=chance;r.value=Math.floor(value);r.effect=effect||"Archive aura";
+  save(); renderRoleEditor(r.id); $("#configSaved").textContent=`SAVED ${r.name}`; setTimeout(()=>$("#configSaved").textContent="",1600);
+}
+function renderCrateEditor(selectedId){
+  const select=$("#crateEditorSelect"); if(!select)return;
+  select.innerHTML=crates.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)} — ${money(c.cost)} C</option>`).join("");
+  if(selectedId)select.value=selectedId;
+  loadCrateEditor();
+}
+function loadCrateEditor(){
+  const c=crates.find(x=>x.id===$("#crateEditorSelect")?.value); if(!c)return;
+  $("#crateEditorName").value=c.name; $("#crateEditorTier").value=c.tier; $("#crateEditorCost").value=c.cost; $("#crateEditorColor").value=c.accent; $("#crateEditorDesc").value=c.desc; $("#crateEditorPool").value=c.pool.join(", ");
+}
+function saveCrateEditor(){
+  if(account()?.access!=="administrative")return;
+  const c=crates.find(x=>x.id===$("#crateEditorSelect")?.value); if(!c)return;
+  const name=$("#crateEditorName").value.trim(); const tier=$("#crateEditorTier").value; const cost=Number($("#crateEditorCost").value); const color=$("#crateEditorColor").value.trim(); const desc=$("#crateEditorDesc").value.trim();
+  const pool=$("#crateEditorPool").value.split(",").map(x=>x.trim()).filter(Boolean).filter(id=>role(id));
+  if(!name||!Number.isFinite(cost)||cost<0||!/^#[0-9a-fA-F]{6}$/.test(color)||!pool.length){alert("Check the crate name, cost, #RRGGBB color, and use valid role IDs in the pool.");return;}
+  c.name=name;c.tier=tier;c.cost=Math.floor(cost);c.accent=color;c.desc=desc||"Archive crate.";c.pool=[...new Set(pool)];
+  save(); renderCrateEditor(c.id); $("#configSaved").textContent=`SAVED ${c.name}`; setTimeout(()=>$("#configSaved").textContent="",1600);
+}
+function openConfig(){
+  if(account()?.access!=="administrative")return;
+  renderRoleEditor();renderCrateEditor();$("#configSaved").textContent="";showModal("configModal");
+}
+
 function wireEvents(){
 $$("[data-close]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.close;closeModal(id);if(id==="signupModal"&&!account())$("#authGate")?.classList.remove("hidden");}));
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
 $("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);});
 $("#inventoryGrid").addEventListener("click",e=>{const b=e.target.closest("[data-sell-role]");if(b)sellTitle(b.dataset.sellRole);});
-$("#skipRoll").addEventListener("click",()=>finishRoll(pendingRole));
+$("#skipRoll").addEventListener("click",()=>{
+  if(!rolling || !pendingRole)return;
+  const track=$("#rollTrack");
+  const tile=track?.children?.[rollWinnerIndex];
+  if(tile){
+    const step=tile.getBoundingClientRect().width+8;
+    const target=(step*rollWinnerIndex)+(tile.getBoundingClientRect().width/2);
+    track.style.transition="none";
+    track.style.transform=`translateX(-${target}px)`;
+  }
+  finishRoll(pendingRole);
+});
 $("#closeResult").addEventListener("click",()=>closeModal("rollModal"));
 $("#openBackpack").addEventListener("click",()=>{closeModal("rollModal");switchPage("inventory")});
 $("#avatarInput").addEventListener("change",()=>readImage($("#avatarInput"),$("#avatarPreview")));
@@ -404,6 +382,16 @@ $("#adminSetCredits").addEventListener("click",()=>setAdminCredits("set"));
 $("#adminAddCredits").addEventListener("click",()=>{const n=Number($("#adminAmount").value);if(!Number.isFinite(n)||n<0){alert("Enter a valid amount first.");return;}const target=state.accounts[$("#adminTargetId").value];if(!target)return;$("#adminAmount").value=target.credits+Math.floor(n);setAdminCredits("set")});
 $("#adminSearchUsers").addEventListener("input",()=>{const q=$("#adminSearchUsers").value.trim().toLowerCase();const list=Object.values(state.accounts).filter(a=>a.username.toLowerCase().includes(q));$("#adminUserList").innerHTML=list.map(a=>`<button class="admin-user" data-admin-user="${a.id}"><span>${escapeHtml(a.username)}</span><small>${money(a.credits)} C</small></button>`).join("")||`<p class="muted">No users found.</p>`});
 $("#adminUserList").addEventListener("click",e=>{const b=e.target.closest("[data-admin-user]");if(b)openAdminPanel(b.dataset.adminUser)});
+$("#archiveEditorNav")?.addEventListener("click",openConfig);
+$("#roleEditorSelect")?.addEventListener("change",loadRoleEditor);
+$("#crateEditorSelect")?.addEventListener("change",loadCrateEditor);
+$("#saveRoleEditor")?.addEventListener("click",saveRoleEditor);
+$("#saveCrateEditor")?.addEventListener("click",saveCrateEditor);
+$$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
+  $$("[data-config-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  $$(".config-panel").forEach(x=>x.classList.add("hidden"));
+  $("#"+b.dataset.configTab)?.classList.remove("hidden");
+}));
 }
 
 function bootSSML(){

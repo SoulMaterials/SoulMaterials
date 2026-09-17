@@ -37,6 +37,7 @@
     </nav>
     <button id="directoryBtn" class="directory-btn" title="Search SSML members">SEARCH</button>
     <button id="adminNav" class="admin-nav hidden" title="Administrative controls">ADMIN</button>
+    <button id="archiveEditorNav" class="admin-nav hidden" title="Edit archive configuration">EDITOR</button>
     <div class="top-actions">
       <div class="currency-pill"><img id="currencyIcon" alt=""><span id="credits">25,000</span><small> CREDITS</small></div>
       <button id="profileBtn" class="profile-chip">
@@ -211,6 +212,45 @@
     </div>
   </div>
 
+  <div id="configModal" class="modal hidden">
+    <div class="modal-card config-card">
+      <button class="close" data-close="configModal">×</button>
+      <p class="eyebrow">ADMINISTRATIVE // ARCHIVE CONFIG</p>
+      <h2>ARCHIVE EDITOR</h2>
+      <p class="muted">Crates and titles are separated into <b>data/roles/</b> and <b>data/crates/</b>. These controls edit the current browser copy for testing.</p>
+      <div class="config-tabs"><button class="config-tab active" data-config-tab="roleConfig">ROLE / TITLE</button><button class="config-tab" data-config-tab="crateConfig">CRATE</button></div>
+      <section id="roleConfig" class="config-panel">
+        <label>ROLE / TITLE<select id="roleEditorSelect" class="search-input"></select></label>
+        <div id="roleEditorPreview" class="editor-preview">TITLE PREVIEW</div>
+        <div class="editor-grid">
+          <label>NAME<input id="roleEditorName" maxlength="70"></label>
+          <label>RARITY<select id="roleEditorRarity"><option>COMMON</option><option>UNCOMMON</option><option>RARE</option><option>EPIC</option><option>LEGENDARY</option><option>MYTHIC</option><option>ULTRA</option></select></label>
+          <label>GLOW COLOR<input id="roleEditorColor" placeholder="#ff536e"></label>
+          <label>BASE CHANCE / DIFFICULTY<input id="roleEditorChance" type="number" min="0" step="0.00000001"></label>
+          <label>SELL VALUE<input id="roleEditorValue" type="number" min="0" step="1"></label>
+          <label>EFFECT<input id="roleEditorEffect" maxlength="120"></label>
+        </div>
+        <button id="saveRoleEditor" class="primary-btn full">SAVE TITLE CONFIG</button>
+      </section>
+      <section id="crateConfig" class="config-panel hidden">
+        <label>CRATE<select id="crateEditorSelect" class="search-input"></select></label>
+        <div class="editor-grid">
+          <label>NAME<input id="crateEditorName" maxlength="70"></label>
+          <label>CRATE TIER<select id="crateEditorTier"><option>starter</option><option>rare</option><option>mythic</option></select></label>
+          <label>PRICE<input id="crateEditorCost" type="number" min="0" step="1"></label>
+          <label>GLOW COLOR<input id="crateEditorColor" placeholder="#52e6ff"></label>
+        </div>
+        <label>DESCRIPTION<textarea id="crateEditorDesc" maxlength="220"></textarea></label>
+        <label>ROLE IDS IN THIS CRATE<textarea id="crateEditorPool" class="pool-editor" placeholder="guest, member, sinners-faith, ..."></textarea></label>
+        <p class="tiny-note">Use role IDs from <b>data/roles/roles.js</b>. The roll system uses each title's base chance as its weight inside the selected crate.</p>
+        <button id="saveCrateEditor" class="primary-btn full">SAVE CRATE CONFIG</button>
+      </section>
+      <p id="configSaved" class="success"></p>
+    </div>
+  </div>
+
+  <script src="data/roles/roles.js"></script>
+  <script src="data/crates/crates.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

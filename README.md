@@ -1,28 +1,74 @@
 # SSML // RARE ARCHIVE
 
-GitHub-ready static prototype for the SSML virtual-credit title/crate archive.
+Static GitHub-ready virtual-credit archive prototype.
 
-## Included
+## Folder layout
 
-- Fixed JavaScript syntax error from the original prototype.
-- 50+ collectible SSML titles with rarity, value, and individual glow/effect metadata.
-- 20 progressively more expensive crates; later crates use stronger rarity pools.
-- Animated crate rolling screen with skip button.
-- Crate VIEW screen showing the calculated odds for that crate.
-- Backpack with duplicate stacking (`x2`, `x3`, etc.).
-- Virtual-credit spend/add animations.
-- Sell confirmation using `SELL-SSML`.
-- Sign-up flow with username, avatar, banner, bio, and Guest/Member/Administrative choice.
-- Administrative verification using the demo code `SSML-ADMIN`.
-- Member search/directory and profile viewing.
-- Administrative profile controls to gift credits or set an exact virtual balance for an account.
-- Administrative control-room user search.
-- Profile backpack showing titles owned and duplicate counts.
+```text
+ssml-fixed/
+├── index.html
+├── styles.css
+├── app.js
+└── data/
+    ├── roles/
+    │   └── roles.js
+    └── crates/
+        └── crates.js
+```
 
-## Important
+## Editing titles / roles
 
-This is a **frontend-only prototype**. Data is stored in `localStorage`, so accounts and balances are only shared inside the same browser/device. The administrative code is visible in client-side JavaScript and is **not secure authentication**.
+Open `data/roles/roles.js`.
 
-For the real SSML site, replace the local storage layer with a backend/authentication service. Server-side authorization must verify administrative permissions before allowing credit changes, title ownership changes, or profile edits.
+Each role uses:
 
-Credits in this prototype are virtual and have no cash value.
+```js
+["role-id", "ROLE NAME", "RARITY", baseChance, sellValue, "#HEXCOLOR", "visual effect"]
+```
+
+- `ROLE NAME` = title shown on the site
+- `RARITY` = COMMON / UNCOMMON / RARE / EPIC / LEGENDARY / MYTHIC / ULTRA
+- `baseChance` = difficulty weight. Lower number = harder to roll.
+- `sellValue` = virtual credit value
+- `#HEXCOLOR` = glow and border color
+- `visual effect` = text describing the title effect
+
+Example:
+
+```js
+["void-king", "VOID KING", "MYTHIC", 0.003, 2500000, "#9b6cff", "Purple void crown"]
+```
+
+## Editing crates
+
+Open `data/crates/crates.js`.
+
+Each crate uses:
+
+```js
+["crate-id", "CRATE NAME", "mythic", 1000000, "Description", "#HEXCOLOR", ["role-id-1", "role-id-2"]]
+```
+
+Change the price, color, tier, description, and role pool without touching the main application.
+
+The roll system reads the selected role pool and uses each role's `baseChance` as its weight. Expensive crates are intentionally populated with stronger role pools and receive a small quality boost.
+
+## Administrative editor
+
+The site also has an ADMINISTRATIVE-only `EDITOR` button. It lets an administrative test account change role name, rarity, glow color, difficulty weight, sell value, effect, and crate settings in the current browser session.
+
+The code files remain the source of truth for a GitHub deployment.
+
+## Sign-in/storage
+
+The sign-in flow is intentionally defensive:
+
+- New accounts can be created from the first `WAIT!` gate.
+- Existing local accounts can sign in by username.
+- Uploaded profile images are resized/compressed before being stored, preventing most browser `localStorage` quota failures.
+- Invalid old archive data is ignored instead of crashing the entire page.
+- Old `ssmlRareArchiveV3` data is still read for migration.
+
+This is a frontend prototype. `localStorage` is browser-local. A real shared SSML site needs a server/database and real authentication before multiple visitors can share accounts, balances, inventories, or administrative permissions.
+
+All credits in this prototype are virtual and have no cash value.
