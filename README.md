@@ -1,49 +1,30 @@
-# SSML Rare Archive — Simple Data Layout
+# SSML // RARE ARCHIVE
 
-There is only ONE data folder. Every crate has its own JavaScript file.
+Render-ready SSML archive site.
 
-```text
-ssml-fixed/
-├── index.html
-├── styles.css
-├── app.js
-└── data/
-    ├── first-signal.js
-    ├── new-member.js
-    ├── sinners-court.js
-    └── ... one file per crate
-```
+## GitHub Pages
+The site can still run as a static demo using browser localStorage.
 
-## Editing a crate
-Open any file inside `data/`. Each file contains:
-- crate name
-- crate price
-- crate color
-- crate tier
-- description
-- the roles inside that crate
-- each role's name
-- rarity
-- `chance` (hardness/weight; lower = harder)
-- `color`
-- `price` (virtual sell value)
-- effect
+## Render Web Service
+This project now includes `server.js` and `package.json` so Render can run it as a Node/Express Web Service.
 
-Example:
+Use:
+- Runtime: Node
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Root Directory: leave blank if these files are at the repository root
+- Plan: Free is fine for testing
 
-```js
-{
-  "id": "sinners-faith",
-  "name": "Sinner's Faith",
-  "rarity": "RARE",
-  "chance": 2.5,
-  "color": "#ff3355",
-  "price": 800000,
-  "effect": "Crimson aura"
-}
-```
+The server listens on `0.0.0.0` and uses Render's `PORT` environment variable.
 
-A smaller `chance` makes the role harder to roll. The website normalizes the roles in each crate to calculate the displayed odds.
+## Shared accounts and friends
+On Render, the browser uses `/api/*` for shared registration, login, directory, follows, friends, and equipped-title updates.
 
-## Important
-The editor changes the current browser session only. A static GitHub page cannot rewrite its own `.js` files. To permanently save admin edits for every visitor, connect the site to a backend/database later.
+For persistent shared data, connect a Render PostgreSQL database and add its internal connection URL as:
+
+`DATABASE_URL`
+
+If `DATABASE_URL` is missing, the server uses temporary in-memory storage. That is useful for testing deployment, but data can disappear when the service restarts.
+
+Render's Node deploy docs: https://render.com/docs/deploy-node-express-app
+Render Postgres connection docs: https://render.com/docs/postgresql-creating-connecting

@@ -38,6 +38,38 @@ let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingC
 function uid(){ return "u_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function money(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString(); }
 function account(){ return state.accounts[state.activeUserId] || null; }
+
+// Render shared-data bridge. GitHub Pages can still run the local-only fallback,
+// while the Render web service uses the shared API/database.
+let serverMode = false;
+async function apiRequest(path, options={}){
+  const res = await fetch(path, {
+    ...options,
+    headers: { "Content-Type":"application/json", ...(options.headers||{}) }
+  });
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+  if(!res.ok){ const err=new Error(data?.error || `API ${res.status}`); err.status=res.status; throw err; }
+  return data;
+}
+async function detectServer(){
+  try {
+    const data = await apiRequest('/api/health', {method:'GET'});
+    serverMode = !!data?.ok;
+  } catch (_) { serverMode = false; }
+}
+function mergeServerUser(u){
+  if(!u?.id)return null;
+  const old=state.accounts[u.id]||{};
+  const merged=ensureAccountShape({...old,...u, passwordHash:old.passwordHash||undefined});
+  state.accounts[u.id]=merged;
+  return merged;
+}
+async function refreshServerUser(id){
+  if(!serverMode)return state.accounts[id]||null;
+  try { const data=await apiRequest(`/api/users/${encodeURIComponent(id)}`); return mergeServerUser(data.user); }
+  catch (_) { return state.accounts[id]||null; }
+}
 function role(id){ return roleById[id]; }
 function save(){
   try{
@@ -292,53 +324,53 @@ async function completeProfile(access){
   if(username.length<2){alert("Username must be at least 2 characters.");return;}
   if(password.length<6){alert("Password must be at least 6 characters.");return;}
 
+  if(serverMode){
+    try{
+      const data=await apiRequest('/api/auth/register',{method:'POST',body:JSON.stringify({username,password,avatar,banner,bio,access})});
+      const a=mergeServerUser(data.user);
+      state.activeUserId=a.id;
+      closeModal("signupModal");
+      $("#authGate").classList.add("hidden");
+      save();
+      openProfile(a.id);
+      return;
+    }catch(err){
+      if(err.status===409){alert("That username already exists. Use the existing-account sign in instead.");return;}
+      console.error("Shared account registration failed",err);
+      alert("The shared account server could not create the account. Try again in a moment.");
+      return;
+    }
+  }
+
   const existing=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
   if(existing){alert("That username already exists. Use the existing-account sign in instead.");return;}
-
   const id=uid();
   const passwordHash=await hashPassword(password);
-  const a=ensureAccountShape({
-    id,username,avatar,banner,bio,passwordHash,access,
-    credits:25000,inventory:{},activity:[],
-    titleId:access==="guest"?"guest":"member",
-    equippedTitleId:access==="guest"?"guest":"member",
-    following:[],followers:[],friends:[]
-  });
-
-  a.inventory[a.titleId]=1;
-  state.accounts[id]=a;
-  state.activeUserId=id;
+  const a=ensureAccountShape({id,username,avatar,banner,bio,passwordHash,access,credits:25000,inventory:{},activity:[],titleId:access==="guest"?"guest":"member",equippedTitleId:access==="guest"?"guest":"member",following:[],followers:[],friends:[]});
+  a.inventory[a.titleId]=1; state.accounts[id]=a; state.activeUserId=id;
   log(`${username} joined SSML as ${role(a.titleId).name}`,access==="guest"?"#5dff9b":"#9b6cff",a);
-  closeModal("signupModal");
-  $("#authGate").classList.add("hidden");
-  save();
-  openProfile(id);
+  closeModal("signupModal"); $("#authGate").classList.add("hidden"); save(); openProfile(id);
 }
 
-function openProfile(id=state.activeUserId){
+async function openProfile(id=state.activeUserId){
+  if(serverMode){ await refreshServerUser(id); }
   const p=state.accounts[id]; if(!p)return;
   ensureAccountShape(p);
   $("#profileBanner").style.backgroundImage=`url("${p.banner}")`;
-  $("#profileAvatar").src=p.avatar;
-  $("#profileName").textContent=p.username;
+  $("#profileAvatar").src=p.avatar; $("#profileName").textContent=p.username;
 
   const r=profileRole(p);
   $("#profileModal .profile-card")?.style.setProperty("--profileGlow", r?.glow || "#52e6ff");
   const titleBox=$("#profileTitle");
   titleBox.textContent=r ? r.name : "NO TITLE EQUIPPED";
-  titleBox.style.borderColor=r?.glow || "#667085";
-  titleBox.style.color=r?.glow || "#667085";
+  titleBox.style.borderColor=r?.glow || "#667085"; titleBox.style.color=r?.glow || "#667085";
   titleBox.style.boxShadow=r ? `0 0 18px ${r.glow}66, 0 0 40px ${r.glow}22` : "none";
   titleBox.classList.toggle("rgb-title", !!r && /rgb|rainbow|spectrum|color/i.test(`${r.name} ${r.effect}`));
 
-  $("#profileBio").textContent=p.bio;
-  $("#profileOwned").textContent=Object.values(p.inventory).reduce((x,y)=>x+y,0);
-  $("#profileCredits").textContent=money(p.credits);
-  $("#profileAccess").textContent=p.access.toUpperCase();
+  $("#profileBio").textContent=p.bio; $("#profileOwned").textContent=Object.values(p.inventory).reduce((x,y)=>x+y,0);
+  $("#profileCredits").textContent=money(p.credits); $("#profileAccess").textContent=p.access.toUpperCase();
 
-  const owned=Object.entries(p.inventory).filter(([rid,count])=>role(rid)&&count>0)
-    .sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
-
+  const owned=Object.entries(p.inventory).filter(([rid,count])=>role(rid)&&count>0).sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
   $("#profileInventory").innerHTML=owned.length?owned.map(([rid,count])=>{
     const rr=role(rid), equipped=p.equippedTitleId===rid;
     return `<div class="profile-role ${equipped?"profile-role-equipped":""}" style="--roleGlow:${rr.glow}">
@@ -348,67 +380,73 @@ function openProfile(id=state.activeUserId){
     </div>`;
   }).join(""):`<div class="muted">No titles collected yet.</div>`;
 
-  const me=account();
-  const self=me?.id===p.id;
-  const following=(me?.following||[]).includes(p.id);
-  const friends=(me?.friends||[]).includes(p.id);
+  const me=account(); const self=me?.id===p.id; const following=(me?.following||[]).includes(p.id); const friends=(me?.friends||[]).includes(p.id);
+  if(self) $("#profileSocialActions").innerHTML=`<span class="social-self">THIS IS YOUR PROFILE</span>`;
+  else $("#profileSocialActions").innerHTML=`<button class="social-btn ${following?"active":""}" data-follow-user="${p.id}">${following?"FOLLOWING":"FOLLOW"}</button><button class="social-btn ${friends?"active":""}" data-friend-user="${p.id}">${friends?"FRIENDS":"ADD FRIEND"}</button>`;
 
-  if(self){
-    $("#profileSocialActions").innerHTML=`<span class="social-self">THIS IS YOUR PROFILE</span>`;
-  }else{
-    $("#profileSocialActions").innerHTML=`
-      <button class="social-btn ${following?"active":""}" data-follow-user="${p.id}">${following?"FOLLOWING":"FOLLOW"}</button>
-      <button class="social-btn ${friends?"active":""}" data-friend-user="${p.id}">${friends?"FRIENDS":"ADD FRIEND"}</button>`;
+  const friendIds=(p.friends||[]);
+  if(serverMode){
+    await Promise.all(friendIds.map(async fid=>{ if(!state.accounts[fid]) await refreshServerUser(fid); }));
   }
-
-  const friendIds=(p.friends||[]).filter(fid=>state.accounts[fid]);
-  $("#profileFriends").innerHTML=friendIds.length ? friendIds.map(fid=>{
+  const visibleFriendIds=friendIds.filter(fid=>state.accounts[fid]);
+  $("#profileFriends").innerHTML=visibleFriendIds.length?visibleFriendIds.map(fid=>{
     const f=state.accounts[fid], fr=profileRole(f)||role("guest");
-    return `<button class="friend-card" data-profile-user="${f.id}">
-      <img src="${f.avatar}" alt=""><span><b>${escapeHtml(f.username)}</b><small style="color:${fr?.glow||"#fff"}">${escapeHtml(fr?.name||"No title")}</small></span>
-    </button>`;
-  }).join("") : `<div class="muted">No friends yet.</div>`;
+    return `<button class="friend-card" data-profile-user="${f.id}"><img src="${f.avatar}" alt=""><span><b>${escapeHtml(f.username)}</b><small style="color:${fr?.glow||"#fff"}">${escapeHtml(fr?.name||"No title")}</small></span></button>`;
+  }).join(""):`<div class="muted">No friends yet.</div>`;
 
-  $("#profileAdminTools")?.classList.toggle("hidden",me?.access!=="administrative");
-  $("#profileAdminTarget").value=id;
-  showModal("profileModal");
+  $("#profileAdminTools")?.classList.toggle("hidden",me?.access!=="administrative"); $("#profileAdminTarget").value=id; showModal("profileModal");
 }
 
-function toggleFollow(targetId){
-  const me=account(), target=state.accounts[targetId];
-  if(!me||!target||me.id===targetId)return;
-  me.following ||= []; target.followers ||= [];
-  const i=me.following.indexOf(targetId);
-  if(i>=0){me.following.splice(i,1); const j=target.followers.indexOf(me.id);if(j>=0)target.followers.splice(j,1);}
-  else {me.following.push(targetId); if(!target.followers.includes(me.id))target.followers.push(me.id);}
+async function toggleFollow(targetId){
+  const me=account(), target=state.accounts[targetId]; if(!me||!target||me.id===targetId)return;
+  if(serverMode){
+    try{ const data=await apiRequest(`/api/users/${encodeURIComponent(targetId)}/follow`,{method:'POST',body:JSON.stringify({userId:me.id})}); mergeServerUser(data.me); mergeServerUser(data.target); save(); await openProfile(targetId); return; }
+    catch(err){ console.error(err); alert("Could not update the follow right now."); return; }
+  }
+  me.following ||= []; target.followers ||= []; const i=me.following.indexOf(targetId);
+  if(i>=0){me.following.splice(i,1); const j=target.followers.indexOf(me.id);if(j>=0)target.followers.splice(j,1);} else {me.following.push(targetId);if(!target.followers.includes(me.id))target.followers.push(me.id);}
   save(); openProfile(targetId);
 }
 
-function toggleFriend(targetId){
-  const me=account(), target=state.accounts[targetId];
-  if(!me||!target||me.id===targetId)return;
-  me.friends ||= []; target.friends ||= [];
-  const i=me.friends.indexOf(targetId);
-  if(i>=0){me.friends.splice(i,1); const j=target.friends.indexOf(me.id);if(j>=0)target.friends.splice(j,1);}
-  else {me.friends.push(targetId); if(!target.friends.includes(me.id))target.friends.push(me.id);}
+async function toggleFriend(targetId){
+  const me=account(), target=state.accounts[targetId]; if(!me||!target||me.id===targetId)return;
+  if(serverMode){
+    try{ const data=await apiRequest(`/api/users/${encodeURIComponent(targetId)}/friend`,{method:'POST',body:JSON.stringify({userId:me.id})}); mergeServerUser(data.me); mergeServerUser(data.target); save(); await openProfile(targetId); return; }
+    catch(err){ console.error(err); alert("Could not update the friendship right now."); return; }
+  }
+  me.friends ||= []; target.friends ||= []; const i=me.friends.indexOf(targetId);
+  if(i>=0){me.friends.splice(i,1); const j=target.friends.indexOf(me.id);if(j>=0)target.friends.splice(j,1);} else {me.friends.push(targetId);if(!target.friends.includes(me.id))target.friends.push(me.id);}
   save(); openProfile(targetId);
 }
 
-function equipTitle(id){
-  const a=account(), r=role(id);
-  if(!a||!r||!(a.inventory[id]>0))return;
+async function equipTitle(id){
+  const a=account(), r=role(id); if(!a||!r||!(a.inventory[id]>0))return;
   a.equippedTitleId = a.equippedTitleId===id ? null : id;
-  save();
-  openProfile(a.id);
+  if(serverMode){
+    try{ const data=await apiRequest(`/api/users/${encodeURIComponent(a.id)}/profile`,{method:'POST',body:JSON.stringify({requesterId:a.id,equippedTitleId:a.equippedTitleId})}); mergeServerUser(data.user); }
+    catch(err){ console.error(err); alert("Could not save your equipped title to the shared server."); return; }
+  }
+  save(); openProfile(a.id);
 }
 
 function openDirectory(){
-  $("#directorySearch").value=""; $("#directoryResults").innerHTML=`<div class="activity"><b>Search for an SSML username.</b></div>`; showModal("directoryModal");
+  $("#directorySearch").value=""; $("#directoryResults").innerHTML=`<div class="activity"><b>Search for an SSML username.</b></div>`; showModal("directoryModal"); searchDirectory();
 }
-function searchDirectory(){
-  const q=$("#directorySearch").value.trim().toLowerCase(); const results=Object.values(state.accounts).filter(a=>!q||a.username.toLowerCase().includes(q));
-  $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.titleId)||role("guest");return `<button class="directory-user" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r.glow}">${escapeHtml(r.name)} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
+async function searchDirectory(){
+  const q=$("#directorySearch").value.trim().toLowerCase();
+  if(serverMode){
+    try{
+      const data=await apiRequest(`/api/users?q=${encodeURIComponent(q)}`);
+      data.users.forEach(mergeServerUser);
+      const results=data.users;
+      $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");return `<button class="directory-user" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
+      return;
+    }catch(err){ console.error(err); }
+  }
+  const results=Object.values(state.accounts).filter(a=>!q||a.username.toLowerCase().includes(q));
+  $("#directoryResults").innerHTML=results.length?results.map(a=>{const r=role(a.equippedTitleId||a.titleId)||role("guest");return `<button class="directory-user" data-profile-user="${a.id}"><img src="${a.avatar}" alt=""><span><b>${escapeHtml(a.username)}</b><small style="color:${r?.glow||"#fff"}">${escapeHtml(r?.name||"No title")} • ${a.access}</small></span><strong>${money(a.credits)} C</strong></button>`}).join(""):`<div class="activity"><b>No matching account.</b></div>`;
 }
+
 function openAdminPanel(targetId=state.activeUserId){
   if(account()?.access!=="administrative")return;
   const target=state.accounts[targetId]||account(); $("#adminTargetId").value=target.id; $("#adminTargetName").textContent=target.username; $("#adminTargetCredits").textContent=money(target.credits)+" C"; $("#adminAmount").value=""; showModal("adminModal");
@@ -449,20 +487,24 @@ function openAuth(){
 }
 async function signInExisting(){
   const username=$("#loginUsername")?.value.trim();
-  if(!username){ alert("Enter your SSML username first."); return; }
+  const password=$("#loginPassword")?.value || "";
+  if(!username){alert("Enter your SSML username first.");return;}
+  if(!password){alert("Enter your password.");return;}
+  if(serverMode){
+    try{
+      const data=await apiRequest('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});
+      const found=mergeServerUser(data.user); state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id); return;
+    }catch(err){
+      alert(err.status===404?"That account does not exist on the shared SSML server.":err.status===401?"Incorrect password.":"The shared account server could not sign you in right now.");
+      return;
+    }
+  }
   const found=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
   if(!found){ alert("That account was retired because it was created before passwords were added. Please create it again with JOIN SSML NOW."); return; }
-  const password=$("#loginPassword")?.value || "";
-  if(!password){ alert("Enter your password."); return; }
-  const hash=await hashPassword(password);
-  if(hash!==found.passwordHash){ alert("Incorrect password."); return; }
-  state.activeUserId=found.id;
-  save();
-  closeModal("signupModal");
-  $("#authGate")?.classList.add("hidden");
-  renderAll();
-  openProfile(found.id);
+  const hash=await hashPassword(password); if(hash!==found.passwordHash){ alert("Incorrect password."); return; }
+  state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
 }
+
 
 function renderRoleEditor(selectedId){
   const select=$("#roleEditorSelect"); if(!select)return;
@@ -576,8 +618,9 @@ $$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
 }));
 }
 
-function bootSSML(){
+async function bootSSML(){
   try {
+    await detectServer();
     // Migrate the previous prototype before rendering or deciding whether the gate is needed.
     (function migrateOld(){
       if(state.accounts && Object.keys(state.accounts).length)return;
