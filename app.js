@@ -65,6 +65,40 @@ const roles = [
   ["unknown","UNKNOWN","ULTRA",.001,5000000,"#ff00ff","Reality-error aura"]
 ].map(([id,name,rarity,baseChance,value,glow,effect]) => ({id,name,rarity,baseChance,value,glow,effect}));
 
+const EXTRA_ROLES = [
+  ["grave-scribe","Grave Scribe","EPIC",0.4,90000,"#8b8cff","Floating grave-script glyphs"],
+  ["blood-moon","Blood Moon","LEGENDARY",0.09,300000,"#ff244f","Blood-moon eclipse"],
+  ["void-prince","Void Prince","MYTHIC",0.018,950000,"#a46bff","Purple void crown"],
+  ["void-emperor","Void Emperor","ULTRA",0.006,2200000,"#7b5cff","Expanding void crown"],
+  ["celestial-sinner","Celestial Sinner","ULTRA",0.004,3000000,"#fff1ff","Black-winged halo"],
+  ["fallen-king","Fallen King","MYTHIC",0.02,1100000,"#9d8cff","Broken throne aura"],
+  ["fallen-emperor","Fallen Emperor","ULTRA",0.004,4000000,"#ff496d","Imperial fracture aura"],
+  ["sinners-apocalypse","Sinner's Apocalypse","ULTRA",0.002,5000000,"#ff1f45","Crimson apocalypse field"],
+  ["endless-night","Endless Night","MYTHIC",0.016,1300000,"#6670ff","Endless night sky"],
+  ["nightmare-god","Nightmare God","ULTRA",0.0025,6500000,"#a34cff","Nightmare galaxy"],
+  ["godslayer","Godslayer","ULTRA",0.0018,7500000,"#ff5a5a","Divine blade flare"],
+  ["heaven-breaker","Heaven Breaker","ULTRA",0.0012,9000000,"#ffffff","Heaven-splitting beam"],
+  ["hell-crowned","Hell-Crowned","ULTRA",0.001,10000000,"#ff3d21","Infernal crown"],
+  ["absolute-void","Absolute Void","ULTRA",0.0007,15000000,"#d9d9ff","Absolute void distortion"],
+  ["eternal-king","Eternal King","ULTRA",0.0005,20000000,"#ffe99a","Eternal royal halo"],
+  ["archive-deity","Archive Deity","ULTRA",0.00035,30000000,"#67f6ff","Infinite archive orbit"],
+  ["ssml-overlord","SSML Overlord","ULTRA",0.0002,50000000,"#ff4dce","Overlord RGB storm"],
+  ["final-judgement","FINAL JUDGEMENT","ULTRA",0.00012,75000000,"#ffffff","Judgement sigil"],
+  ["end-of-archive","END OF THE ARCHIVE","ULTRA",0.00008,100000000,"#ff2e5e","Archive collapse"],
+  ["one-in-a-billion","ONE IN A BILLION","ULTRA",0.00002,250000000,"#00ffff","One-in-a-billion aura"],
+  ["absolute-saint","ABSOLUTE SAINT","ULTRA",0.00001,500000000,"#fff4cf","Six-wing saint aura"],
+  ["god-of-ssml","GOD OF SSML","ULTRA",0.000005,1000000000,"#ffffff","Massive celestial field"],
+  ["reality-ended","REALITY ENDED","ULTRA",0.000002,2500000000,"#ff00ff","Reality tear"],
+  ["beyond-divine","BEYOND DIVINE","ULTRA",0.000001,5000000000,"#7fffff","Beyond-divine distortion"],
+  ["final-file","FINAL FILE","ULTRA",0.0000005,10000000000,"#fff","Archive terminal glow"],
+  ["saint-god-coin","SAINT GOD","ULTRA",0.0000002,25000000000,"#ffd66b","Saint-god coin halo"],
+  ["9999","9999","ULTRA",0.0000001,99999999999,"#ff00ff","Numerical reality glitch"],
+  ["the-finalline","THE FINAL LINE","ULTRA",0.00000005,250000000000,"#ffffff","Final-line beam"],
+  ["hollow-deity","HOLLOW DEITY","ULTRA",0.00000003,500000000000,"#bbaaff","Hollow divine wings"],
+  ["absolute-end","ABSOLUTE END","ULTRA",0.00000001,1000000000000,"#ff315f","Absolute end aura"]
+].map(([id,name,rarity,baseChance,value,glow,effect]) => ({id,name,rarity,baseChance,value,glow,effect}));
+roles.push(...EXTRA_ROLES);
+
 const roleById = Object.fromEntries(roles.map(r => [r.id,r]));
 const rarityPower = {COMMON:1,UNCOMMON:2,RARE:3,EPIC:4,LEGENDARY:5,MYTHIC:6,ULTRA:7};
 
@@ -91,6 +125,20 @@ const crates = [
   ["unknown-file","UNKNOWN FILE","mythic",10000000,"The highest-cost crate currently in the prototype.","#ff00ff",["unknown","god-of-the-archive","company-breaker","the-last-sinner","hollow-kingdom"]]
 ].map(([id,name,tier,cost,desc,accent,pool]) => ({id,name,tier,cost,desc,accent,pool}));
 
+crates.push(
+  ["royal-vault","ROYAL VAULT","mythic",900000,"A royal vault with serious endgame titles.","#ffe7a1",["royal-keeper","golden-saint","eternal","fallen-king","void-prince","celestial-sinner"]],
+  ["divine-vault","DIVINE VAULT","mythic",1250000,"Divine titles begin appearing in the pool.","#ffffff",["golden-saint","angelic-praise","fallen-emperor","heaven-breaker","absolute-saint","god-of-ssml"]],
+  ["apocalypse","APOCALYPSE","mythic",2000000,"Apocalyptic records and violent effects.","#ff315f",["sinners-apocalypse","nightmare-god","godslayer","fallen-emperor","the-last-sinner","heaven-breaker"]],
+  ["overlord","OVERLORD","mythic",3500000,"Only the archive's highest classes belong here.","#ff4dce",["void-emperor","ssml-overlord","archive-deity","eternal-king","god-of-the-archive","company-breaker"]],
+  ["absolute","ABSOLUTE","mythic",5000000,"The first absurd-tier crate.","#00ffff",["absolute-void","archive-deity","reality-ended","beyond-divine","god-of-ssml","final-judgement"]],
+  ["end-game","END GAME","mythic",10000000,"End-game archive records.","#ff2e5e",["end-of-archive","one-in-a-billion","final-file","the-last-sinner","god-of-ssml","reality-ended"]],
+  ["beyond-divine","BEYOND DIVINE","mythic",25000000,"A crate for titles that should barely exist.","#7fffff",["beyond-divine","absolute-saint","hollow-deity","final-judgement","the-finalline","god-of-ssml"]],
+  ["saint-god","SAINT GOD","mythic",50000000,"Near-terminal rarity pool.","#ffd66b",["saint-god-coin","eternal-king","absolute-saint","archive-deity","god-of-ssml","hollow-deity"]],
+  ["reality-breaker","REALITY BREAKER","mythic",100000000,"Reality-breaking endgame titles.","#ff00ff",["reality-ended","beyond-divine","absolute-end","one-in-a-billion","the-finalline","god-of-ssml"]],
+  ["final-archive","FINAL ARCHIVE","mythic",250000000,"The final public prototype crate.","#ffffff",["absolute-end","final-file","end-of-archive","the-finalline","hollow-deity","one-in-a-billion"]],
+  ["terminal","TERMINAL","mythic",1000000000,"Terminal archive. Almost nothing survives the roll.","#ff315f",["the-finalline","absolute-end","reality-ended","beyond-divine","god-of-ssml","final-file"]]
+).forEach(([id,name,tier,cost,desc,accent,pool])=>crates.push({id,name,tier,cost,desc,accent,pool}));
+
 const STORAGE = "ssmlRareArchiveV3";
 let old = null;
 try { old = JSON.parse(localStorage.getItem(STORAGE) || "null"); } catch (error) {
@@ -103,7 +151,7 @@ const state = (old && typeof old === "object" && old.accounts && typeof old.acco
   activity:[],
   guestSeeded:false
 };
-let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0;
+let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
 
 function uid(){ return "u_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function money(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString(); }
@@ -195,28 +243,71 @@ function showContents(id){
   showModal("contentsModal");
 }
 function openCrate(id){
-  if(rolling)return; const a=account(); const c=crates.find(x=>x.id===id); if(!a||!c)return;
-  if(a.credits<c.cost){alert(`Not enough virtual credits. You need ${money(c.cost)} C.`); return;}
-  a.credits-=c.cost; currentCrate=c; pendingRole=weightedPick(c); pendingCost=c.cost; animateCurrency(c.cost,"spend"); save(); startRoll(c,pendingRole);
+  if(rolling)return;
+  const a=account(); const c=crates.find(x=>x.id===id); if(!a||!c)return;
+  if(a.credits<c.cost){alert(`Not enough virtual credits. You need ${money(c.cost)} C.`);return;}
+  const entries=getCrateEntries(c);
+  const picked=weightedPick(c);
+  const pickedEntry=entries.find(e=>e.role.id===picked.id);
+  a.credits-=c.cost;
+  currentCrate=c; pendingRole=picked; pendingChance=pickedEntry?.chance||0; pendingCost=c.cost;
+  animateCurrency(c.cost,"spend"); save(); startRoll(c,picked);
 }
+function tileMarkup(r){return `<div class="roll-tile" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`;}
 function startRoll(c,winner){
-  rolling=true; $("#rollCrateName").textContent=c.name; $("#rollStatus").textContent="ROLLING ARCHIVE..."; $("#rollResult").classList.add("hidden"); $("#skipRoll").classList.remove("hidden"); showModal("rollModal");
-  const fake=Array.from({length:36},()=>role(c.pool[Math.floor(Math.random()*c.pool.length)])); fake[28]=winner;
-  $("#rollTrack").innerHTML=fake.map(r=>`<div class="roll-tile" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`).join("");
-  const track=$("#rollTrack"); track.style.transition="none"; track.style.transform="translateX(0)";
+  rolling=true;
+  $("#rollCrateName").textContent=c.name;
+  $("#rollStatus").textContent="ROLLING ARCHIVE...";
+  $("#rollResult").classList.add("hidden");
+  $("#skipRoll").classList.remove("hidden");
+  showModal("rollModal");
+
+  // The winning title is placed at one exact index. The animation and skip button
+  // both use this same index, so the visible landing tile is always the actual win.
+  rollWinnerIndex=34;
+  const fake=Array.from({length:rollWinnerIndex+8},()=>role(c.pool[Math.floor(Math.random()*c.pool.length)]));
+  fake[rollWinnerIndex]=winner;
+  $("#rollTrack").innerHTML=fake.map(tileMarkup).join("");
+  const track=$("#rollTrack");
+  track.style.transition="none";
+  track.style.transform="translateX(0px)";
+
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const tile=track.children[0].getBoundingClientRect().width+8; const target=(tile*28)-(window.innerWidth<650?55:85);
-    track.style.transition="transform 5.8s cubic-bezier(.08,.78,.12,1)"; track.style.transform=`translateX(-${target}px)`;
+    const tile=track.children[0];
+    if(!tile)return;
+    const step=tile.getBoundingClientRect().width+8;
+    const target=(step*rollWinnerIndex)+(tile.getBoundingClientRect().width/2);
+    track.style.transition="transform 6s cubic-bezier(.06,.82,.12,1)";
+    track.style.transform=`translateX(-${target}px)`;
   }));
-  clearTimeout(rollTimer); rollTimer=setTimeout(()=>finishRoll(winner),6100);
+  clearTimeout(rollTimer);
+  rollTimer=setTimeout(()=>finishRoll(winner),6300);
 }
 function finishRoll(r){
-  if(!rolling)return; rolling=false; clearTimeout(rollTimer); $("#skipRoll").classList.add("hidden");
+  if(!rolling)return;
+  rolling=false; clearTimeout(rollTimer); $("#skipRoll").classList.add("hidden");
   const a=account(); if(!a)return;
-  a.inventory[r.id]=(a.inventory[r.id]||0)+1; log(`Unlocked "${r.name}" • ${r.rarity}`,r.glow); save();
-  $("#rollStatus").textContent="ARCHIVE LOCKED"; $("#resultGlow").style.setProperty("--resultGlow",r.glow); $("#rollResult").style.setProperty("--resultGlow",r.glow);
-  $("#resultTitle").textContent=r.name; $("#resultRarity").textContent=`${r.rarity} • ${r.baseChance}% base archive rarity`; $("#resultEffect").textContent=r.effect; $("#rollResult").classList.remove("hidden");
+  // On skip, snap to the exact winning tile before revealing the result.
+  const track=$("#rollTrack");
+  if(track?.children?.[rollWinnerIndex]){
+    const tile=track.children[rollWinnerIndex];
+    const step=tile.getBoundingClientRect().width+8;
+    const target=(step*rollWinnerIndex)+(tile.getBoundingClientRect().width/2);
+    track.style.transition="transform .35s cubic-bezier(.2,.8,.2,1)";
+    track.style.transform=`translateX(-${target}px)`;
+  }
+  a.inventory[r.id]=(a.inventory[r.id]||0)+1;
+  log(`Unlocked "${r.name}" • ${r.rarity}`,r.glow); save();
+  $("#rollStatus").textContent="ARCHIVE LOCKED";
+  $("#resultGlow").style.setProperty("--resultGlow",r.glow);
+  $("#rollResult").style.setProperty("--resultGlow",r.glow);
+  $("#resultTitle").textContent=r.name;
+  $("#resultRarity").textContent=`${r.rarity} • ${pendingChance.toFixed(pendingChance<1?4:2)}% chance in ${cNameSafe(currentCrate?.name)}`;
+  $("#resultEffect").textContent=r.effect;
+  $("#rollResult").classList.remove("hidden");
 }
+function cNameSafe(name){return String(name||"this crate").replace(/[<>]/g,"");}
+
 function switchPage(page){ $$(".page").forEach(x=>x.classList.remove("active")); $("#"+page+"Page")?.classList.add("active"); $$(".nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.page===page)); }
 function readImage(input,img){const f=input.files?.[0]; if(!f)return; if(f.size>4*1024*1024){alert("Please use an image under 4 MB.");input.value="";return;} const r=new FileReader(); r.onload=()=>img.src=r.result; r.readAsDataURL(f);}
 
@@ -235,7 +326,7 @@ function openProfile(id=state.activeUserId){
   const r=role(p.titleId)||role("guest"); $("#profileTitle").textContent=r.name; $("#profileTitle").style.borderColor=r.glow; $("#profileTitle").style.color=r.glow; $("#profileTitle").style.boxShadow=`0 0 18px ${r.glow}44`;
   $("#profileBio").textContent=p.bio; $("#profileOwned").textContent=Object.values(p.inventory).reduce((x,y)=>x+y,0); $("#profileCredits").textContent=money(p.credits); $("#profileAccess").textContent=p.access.toUpperCase();
   const owned=Object.entries(p.inventory).filter(([id,count])=>role(id)&&count>0).sort((x,y)=>rarityRank(role(y[0]).rarity)-rarityRank(role(x[0]).rarity));
-  $("#profileInventory").innerHTML=owned.length?owned.map(([id,count])=>{const rr=role(id);return `<div class="profile-role" style="--roleGlow:${rr.glow}"><span>${escapeHtml(rr.name)}</span><small>${rr.rarity}</small><b>x${count}</b></div>`}).join(""):`<div class="muted">No titles collected yet.</div>`;
+  $("#profileInventory").innerHTML=owned.length?owned.map(([id,count])=>{const rr=role(id);return `<div class="profile-role" style="--roleGlow:${rr.glow}"><div class="profile-role-name"><span>${escapeHtml(rr.name)}</span><em>${escapeHtml(rr.effect)}</em></div><small>${rr.rarity}</small><strong>${money(rr.value)} C</strong><b>x${count}</b></div>`}).join(""):`<div class="muted">No titles collected yet.</div>`;
   $("#profileAdminTools")?.classList.toggle("hidden",account()?.access!=="administrative"); $("#profileAdminTarget").value=id; showModal("profileModal");
 }
 function openDirectory(){
@@ -288,7 +379,7 @@ function signInExisting(){
   state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
 }
 function wireEvents(){
-$$("[data-close]").forEach(b=>b.addEventListener("click",()=>closeModal(b.dataset.close)));
+$$("[data-close]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.close;closeModal(id);if(id==="signupModal"&&!account())$("#authGate")?.classList.remove("hidden");}));
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
 $("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);});
