@@ -61,22 +61,6 @@ window.SSML_CRATE_DATA.push({
             price: 250000000000,
 
             effect: "Devil's-book"
-        },
-
-        {
-            id: "cash",
-
-            name: "Cash💵",
-
-            rarity: "mythic",
-
-            chance: 50,
-
-            color: "#48ff00",
-
-            price: 1000,
-
-            effect: "Paper"
         }
 
     ]
