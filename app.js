@@ -722,7 +722,7 @@ async function signInExisting(){
     }
   }
   const found=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
-  if(!found){ alert("That account was retired because it was created before passwords were added. Please create it again with JOIN SSML NOW."); return; }
+  if(!found){ alert("That SSML account was not found. Please create or sign in with a current password-protected account."); return; }
   const hash=await hashPassword(password); if(hash!==found.passwordHash){ alert("Incorrect password."); return; }
   state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
 }
@@ -927,8 +927,18 @@ async function bootSSML(){
     renderAll();
   } catch(error) {
     console.error("SSML boot error:", error);
-    alert("SSML could not start correctly. The local archive data has been reset; refresh the page and try again.");
-    try { localStorage.removeItem(STORAGE); } catch (_) {}
+    // Never wipe the user's archive just because one startup feature failed.
+    // Keep local data intact and leave the authentication gate usable.
+    try {
+      $("authGate")?.classList.remove("hidden");
+      $("profileBtn")?.classList.add("hidden");
+      renderCrates($(".filter.active")?.dataset.filter || "all");
+      renderInventory();
+      renderActivity();
+      wireEvents();
+    } catch(fallbackError) {
+      console.error("SSML fallback boot error:", fallbackError);
+    }
   }
 }
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootSSML, {once:true});
