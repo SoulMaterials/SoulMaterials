@@ -11,7 +11,7 @@ window.SSML_CRATE_DATA.push({
     image: "https://media.discordapp.net/attachments/1535462023402364938/1550335846153199736/8mPh54AAAABklEQVQDAAewLLuLaaxtAAAAAElFTkSuQmCC.png?ex=6aadf645&is=6aaca4c5&hm=577ebfd134ecc6631d6dc94abb5759d95e119ee8d658d671a072bf1b052cd26e&=&format=webp&quality=lossless",
 
     // CHANGE THE CRATE PRICE HERE
-    cost: 9000000000000000,
+    cost: 10000000,
 
     // CHANGE THE CRATE GLOW COLOR HERE
     accent: "#ffffff",
