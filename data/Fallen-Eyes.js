@@ -3,7 +3,7 @@ window.SSML_CRATE_DATA = window.SSML_CRATE_DATA || [];
 window.SSML_CRATE_DATA.push({
     id: "darkness-take-over-fallen-darkness",
 
-    name: "D-A-R-K-N-E-S-S--T-A-K-E-O-V-E-R-F-A-L-L-E-N--D-A-R-K-N-E-S-S"
+    name: "D-A-R-K-N-E-S-S--T-A-K-E-O-V-E-R-F-A-L-L-E-N--D-A-R-K-N-E-S-S",
 
     tier: "ULTRA",
 
@@ -40,8 +40,7 @@ window.SSML_CRATE_DATA.push({
             // VIRTUAL SELL VALUE
             price: 9000000000000000,
 
-            effect:
-                "Fellows darkness"
+            effect: "Fellows darkness"
         },
 
         // =====================================================
@@ -64,8 +63,7 @@ window.SSML_CRATE_DATA.push({
             effect: "Devil's-book"
         },
 
-
-         {
+        {
             id: "cash",
 
             name: "Cash💵",
