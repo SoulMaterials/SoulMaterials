@@ -866,14 +866,14 @@ function wireEvents(){
 $$("[data-close]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.close;closeModal(id);if(id==="signupModal"&&!account())$("#authGate")?.classList.remove("hidden");}));
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
-$("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");const auto=e.target.closest("[data-auto-spin]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);if(auto)startAutoSpin(auto.dataset.autoSpin);});
-$("#inventoryGrid").addEventListener("click",e=>{
+$("#crateGrid")?.addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");const auto=e.target.closest("[data-auto-spin]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);if(auto)startAutoSpin(auto.dataset.autoSpin);});
+$("#inventoryGrid")?.addEventListener("click",e=>{
   const equip=e.target.closest("[data-equip-role]");
   const sell=e.target.closest("[data-sell-role]");
   if(equip)equipTitle(equip.dataset.equipRole);
   if(sell)sellTitle(sell.dataset.sellRole);
 });
-$("#skipRoll").addEventListener("click",()=>{
+$("#skipRoll")?.addEventListener("click",()=>{
   if(!rolling || !pendingRole)return;
   const track=$("#rollTrack");
   const tile=track?.children?.[rollWinnerIndex];
@@ -885,36 +885,36 @@ $("#skipRoll").addEventListener("click",()=>{
   }
   finishRoll(pendingRole);
 });
-$("#closeResult").addEventListener("click",()=>closeModal("rollModal"));
-$("#openBackpack").addEventListener("click",()=>{closeModal("rollModal");switchPage("inventory")});
-$("#avatarInput").addEventListener("change",()=>readImage($("#avatarInput"),$("#avatarPreview")));
-$("#bannerInput").addEventListener("change",()=>readImage($("#bannerInput"),$("#bannerPreview")));
+$("#closeResult")?.addEventListener("click",()=>closeModal("rollModal"));
+$("#openBackpack")?.addEventListener("click",()=>{closeModal("rollModal");switchPage("inventory")});
+$("#avatarInput")?.addEventListener("change",()=>readImage($("#avatarInput"),$("#avatarPreview")));
+$("#bannerInput")?.addEventListener("change",()=>readImage($("#bannerInput"),$("#bannerPreview")));
 $("#openSignup")?.addEventListener("click",openAuth);
-$("#loginExisting")?.addEventListener("click",signInExisting);
+
 $("#continueJoin")?.addEventListener("click",()=>{if(!$("#usernameInput").value.trim()){alert("Enter a username first.");return;}$("#signupStep1").classList.add("hidden");$("#signupStep2").classList.remove("hidden")});
 $$("[data-access]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.access==="administrative"){$("#signupStep2").classList.add("hidden");$("#adminStep").classList.remove("hidden");}else completeProfile(b.dataset.access)}));
-$("#verifyAdmin").addEventListener("click",()=>{if($("#adminCode").value.trim()!=="SSML-ADMIN"){$("#adminError").textContent="Invalid proof code.";return;}completeProfile("administrative")});
-$("#profileBtn").addEventListener("click",()=>openProfile());
-$("#profileSocialActions").addEventListener("click",e=>{
+$("#verifyAdmin")?.addEventListener("click",()=>{if($("#adminCode").value.trim()!=="SSML-ADMIN"){$("#adminError").textContent="Invalid proof code.";return;}completeProfile("administrative")});
+$("#profileBtn")?.addEventListener("click",()=>openProfile());
+$("#profileSocialActions")?.addEventListener("click",e=>{
   const f=e.target.closest("[data-follow-user]"); const fr=e.target.closest("[data-friend-user]");
   if(f)toggleFollow(f.dataset.followUser);
   if(fr)toggleFriend(fr.dataset.friendUser);
 });
-$("#profileInventory").addEventListener("click",e=>{
+$("#profileInventory")?.addEventListener("click",e=>{
   const b=e.target.closest("[data-profile-equip]"); if(b)equipTitle(b.dataset.profileEquip);
 });
-$("#profileFriends").addEventListener("click",e=>{
+$("#profileFriends")?.addEventListener("click",e=>{
   const b=e.target.closest("[data-profile-user]"); if(b)openProfile(b.dataset.profileUser);
 });
-$("#directoryBtn").addEventListener("click",openDirectory); $("#directorySearch").addEventListener("input",searchDirectory); $("#directoryResults").addEventListener("click",e=>{const gift=e.target.closest("[data-gift-user]");if(gift){e.stopPropagation();$("#giftTargetId").value=gift.dataset.giftUser;const target=state.accounts[gift.dataset.giftUser];$("#giftAmount").value="";showModal("giftModal");return;}const b=e.target.closest("[data-profile-user]");if(b){closeModal("directoryModal");openProfile(b.dataset.profileUser)}});
-$("#adminNav").addEventListener("click",()=>openAdminPanel());
-$("#profileAdminGive").addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");$("#giftTargetId").value=id;$("#giftAmount").value="";showModal("giftModal")});
-$("#profileAdminSet").addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");openAdminPanel(id)});
-$("#giftCredits").addEventListener("click",giftCredits);
-$("#adminSetCredits").addEventListener("click",()=>setAdminCredits("set"));
-$("#adminAddCredits").addEventListener("click",()=>{const n=Number($("#adminAmount").value);if(!Number.isFinite(n)||n<0){alert("Enter a valid amount first.");return;}const target=state.accounts[$("#adminTargetId").value];if(!target)return;$("#adminAmount").value=target.credits+Math.floor(n);setAdminCredits("set")});
-$("#adminSearchUsers").addEventListener("input",searchAdminUsers);
-$("#adminUserList").addEventListener("click",e=>{const b=e.target.closest("[data-admin-user]");if(b)openAdminPanel(b.dataset.adminUser)});
+$("#directoryBtn")?.addEventListener("click",openDirectory); $("#directorySearch")?.addEventListener("input",searchDirectory); $("#directoryResults")?.addEventListener("click",e=>{const gift=e.target.closest("[data-gift-user]");if(gift){e.stopPropagation();$("#giftTargetId").value=gift.dataset.giftUser;const target=state.accounts[gift.dataset.giftUser];$("#giftAmount").value="";showModal("giftModal");return;}const b=e.target.closest("[data-profile-user]");if(b){closeModal("directoryModal");openProfile(b.dataset.profileUser)}});
+$("#adminNav")?.addEventListener("click",()=>openAdminPanel());
+$("#profileAdminGive")?.addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");$("#giftTargetId").value=id;$("#giftAmount").value="";showModal("giftModal")});
+$("#profileAdminSet")?.addEventListener("click",()=>{const id=$("#profileAdminTarget").value;closeModal("profileModal");openAdminPanel(id)});
+$("#giftCredits")?.addEventListener("click",giftCredits);
+$("#adminSetCredits")?.addEventListener("click",()=>setAdminCredits("set"));
+$("#adminAddCredits")?.addEventListener("click",()=>{const n=Number($("#adminAmount").value);if(!Number.isFinite(n)||n<0){alert("Enter a valid amount first.");return;}const target=state.accounts[$("#adminTargetId").value];if(!target)return;$("#adminAmount").value=target.credits+Math.floor(n);setAdminCredits("set")});
+$("#adminSearchUsers")?.addEventListener("input",searchAdminUsers);
+$("#adminUserList")?.addEventListener("click",e=>{const b=e.target.closest("[data-admin-user]");if(b)openAdminPanel(b.dataset.adminUser)});
 $("#archiveEditorNav")?.addEventListener("click",openConfig);
 $("#roleEditorSelect")?.addEventListener("change",loadRoleEditor);
 $("#crateEditorSelect")?.addEventListener("change",loadCrateEditor);
@@ -930,6 +930,11 @@ $$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
   $("#"+b.dataset.configTab)?.classList.remove("hidden");
 }));
 }
+
+document.addEventListener("click",(e)=>{
+  const b=e.target.closest?.("#loginExisting");
+  if(b){ e.preventDefault(); signInExisting(); }
+});
 
 async function bootSSML(){
   try {
