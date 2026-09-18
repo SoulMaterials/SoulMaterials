@@ -172,14 +172,11 @@ function ensureAccountShape(a){
 if (!state.accounts || typeof state.accounts !== "object") state.accounts = {};
 Object.values(state.accounts).forEach(ensureAccountShape);
 
-// Legacy local accounts without passwords are quietly discarded.
-// The old password-retirement alert is intentionally removed so users are not
-// blocked by an obsolete local-storage migration message. Shared Render accounts
-// are authenticated by the backend with their password.
-for (const [id, a] of Object.entries(state.accounts)) {
-  if (!a.passwordHash) delete state.accounts[id];
-}
-if (!state.accounts[state.activeUserId]) state.activeUserId = null;
+// IMPORTANT: Never delete old local accounts during startup.
+// Older SSML accounts may not have a password yet; keep their archive data so
+// the user can restore the account to the shared Render database by choosing a
+// new password during sign-in.
+if (state.activeUserId && !state.accounts[state.activeUserId]) state.activeUserId = null;
 
 async function hashPassword(password){
   const text = String(password || "");
@@ -717,6 +714,32 @@ async function signInExisting(){
       const data=await apiRequest('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});
       const found=mergeServerUser(data.user); state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id); return;
     }catch(err){
+      // If this username exists in the old browser archive but not in PostgreSQL,
+      // restore it instead of telling the user that their account was deleted.
+      if(err.status===404){
+        const local=Object.values(state.accounts).find(a=>String(a.username||'').toLowerCase()===username.toLowerCase());
+        if(local){
+          if(local.passwordHash){
+            const hash=await hashPassword(password);
+            if(hash!==local.passwordHash){ alert("Incorrect password."); return; }
+          }
+          try{
+            const restored=await apiRequest('/api/auth/restore',{method:'POST',body:JSON.stringify({
+              username,password,avatar:local.avatar,banner:local.banner,bio:local.bio,access:local.access,
+              credits:local.credits,inventory:local.inventory,following:local.following,followers:local.followers,friends:local.friends,
+              titleId:local.titleId,equippedTitleId:local.equippedTitleId,legacyId:local.id
+            })});
+            const found=mergeServerUser(restored.user);
+            state.activeUserId=found.id;
+            save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
+            alert("Your old SSML account was restored. Your archive data was kept.");
+            return;
+          }catch(restoreErr){
+            if(restoreErr.status===409){ alert("That username already exists on the shared SSML server. Use the password for that account."); return; }
+            console.error(restoreErr); alert("Your old account was found, but SSML could not restore it right now. Please try again."); return;
+          }
+        }
+      }
       alert(err.status===404?"That account does not exist on the shared SSML server.":err.status===401?"Incorrect password.":"The shared account server could not sign you in right now.");
       return;
     }

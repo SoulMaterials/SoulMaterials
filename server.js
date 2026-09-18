@@ -151,6 +151,37 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+app.post('/api/auth/restore', async (req, res) => {
+  try {
+    const { username, password, avatar, banner, bio, access = 'guest', credits, inventory, following, followers, friends, titleId, equippedTitleId, legacyId } = req.body || {};
+    const name = String(username || '').trim();
+    if (name.length < 2) return res.status(400).json({ error: 'Username must be at least 2 characters.' });
+    if (String(password || '').length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    if (await findByUsername(name)) return res.status(409).json({ error: 'That username already exists.' });
+    const id = String(legacyId || newId());
+    const hash = await bcrypt.hash(String(password), 12);
+    const user = {
+      id, username: name, password_hash: hash, avatar: avatar || '', banner: banner || '', bio: bio || 'No bio yet.',
+      access: ['guest','member','administrative'].includes(access) ? access : 'guest',
+      credits: Number.isFinite(Number(credits)) ? Math.max(0, Math.floor(Number(credits))) : 25000,
+      title_id: titleId || 'guest', equipped_title_id: equippedTitleId || titleId || 'guest',
+      inventory: inventory && typeof inventory === 'object' ? inventory : {},
+      following: Array.isArray(following) ? following : [], followers: Array.isArray(followers) ? followers : [], friends: Array.isArray(friends) ? friends : []
+    };
+    if (pool) {
+      await pool.query(`INSERT INTO users
+        (id,username,password_hash,avatar,banner,bio,access,credits,title_id,equipped_title_id,inventory,following,followers,friends)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [id,name,hash,user.avatar,user.banner,user.bio,user.access,user.credits,user.title_id,user.equipped_title_id,
+          JSON.stringify(user.inventory),JSON.stringify(user.following),JSON.stringify(user.followers),JSON.stringify(user.friends)]);
+    } else memoryUsers.set(id, user);
+    res.json({ user: cleanUser(user), restored: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Could not restore the account.' });
+  }
+});
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const username = String(req.body?.username || '').trim();
