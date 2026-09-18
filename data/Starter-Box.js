@@ -2,7 +2,7 @@
 window.SSML_CRATE_DATA = window.SSML_CRATE_DATA || [];
 window.SSML_CRATE_DATA.push({
   "id": "Starter-Box",
-  "name": "ANCIENT GOD",
+  "name": "Starter Box",
   "tier": "mythic",
   "cost": 1000,
   "desc": "For collectors chasing the deepest records.",
