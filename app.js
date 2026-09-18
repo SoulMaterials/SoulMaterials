@@ -34,13 +34,15 @@ function loadArchiveState(){
 }
 const state = loadArchiveState();
 let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
+let autoSpinCrateId=null, autoSpinCancelTimer=null;
 const SPECIAL_EFFECTS_STORAGE = "ssmlSpecialRollEffectsV2";
 const DEFAULT_SPECIAL_EFFECT = {
   enabled: true,
   animation: "spin-expand",
   image: "saint-hit.png",
   sound: "assets/Doom effect.mp3",
-  volume: 0.9
+  volume: 0.9,
+  glowColor: "#ff4a00"
 };
 const DEFAULT_SPECIAL_EFFECTS = {
   "saint-of-the-hallow-night-forgotten-pumpkin-kishin": { ...DEFAULT_SPECIAL_EFFECT }
@@ -170,20 +172,14 @@ function ensureAccountShape(a){
 if (!state.accounts || typeof state.accounts !== "object") state.accounts = {};
 Object.values(state.accounts).forEach(ensureAccountShape);
 
-// V4 accounts did not have passwords. They are intentionally retired so every
-// existing visitor must create a fresh account with a password.
-let retiredLegacyAccounts = 0;
+// Legacy local accounts without passwords are quietly discarded.
+// The old password-retirement alert is intentionally removed so users are not
+// blocked by an obsolete local-storage migration message. Shared Render accounts
+// are authenticated by the backend with their password.
 for (const [id, a] of Object.entries(state.accounts)) {
-  if (!a.passwordHash) {
-    delete state.accounts[id];
-    retiredLegacyAccounts++;
-  }
+  if (!a.passwordHash) delete state.accounts[id];
 }
 if (!state.accounts[state.activeUserId]) state.activeUserId = null;
-if(retiredLegacyAccounts && !sessionStorage.getItem("ssmlPasswordNotice")){
-  sessionStorage.setItem("ssmlPasswordNotice","1");
-  setTimeout(()=>alert("SSML account update: old accounts were retired because they did not have passwords. Please create your account again with a password."),200);
-}
 
 async function hashPassword(password){
   const text = String(password || "");
@@ -239,7 +235,7 @@ function renderCrates(filter="all"){
     <div class="crate-art"><span class="crate-spark spark-a"></span><span class="crate-spark spark-b"></span><img alt="${escapeHtml(c.name)}" src="${escapeHtml(c.image || iconSvg(c))}" onerror="this.onerror=null;this.src='${iconSvg(c)}'"></div>
     <div class="crate-body"><p class="eyebrow">${c.tier.toUpperCase()} ARCHIVE</p><h4>${escapeHtml(c.name)}</h4><p class="crate-desc">${escapeHtml(c.desc)}</p>
       <div class="crate-meta"><span class="rarity" style="color:${c.accent}">${c.pool.length} TITLES</span><span class="cost">${money(c.cost)} C</span></div>
-      <div class="crate-actions"><button class="secondary-btn" data-view-crate="${c.id}">VIEW</button><button class="primary-btn" data-open-crate="${c.id}">OPEN</button></div>
+      <div class="crate-actions"><button class="secondary-btn" data-view-crate="${c.id}">VIEW</button><button class="primary-btn" data-open-crate="${c.id}">OPEN</button><button class="auto-spin-btn" data-auto-spin="${c.id}">AUTO SPIN</button></div>
     </div></article>`).join("");
 }
 function renderInventory(){
@@ -275,6 +271,38 @@ function log(text,glow="#52e6ff",toAccount=null){
   const entry={text,glow,time:timeNow()}; state.activity.unshift(entry); state.activity=state.activity.slice(0,60);
   if(toAccount){toAccount.activity.unshift(entry);toAccount.activity=toAccount.activity.slice(0,30);}
 }
+function updateAutoSpinButtons(){
+  $$("[data-auto-spin]").forEach(btn=>{
+    const active=autoSpinCrateId===btn.dataset.autoSpin;
+    btn.textContent=active?"CANCEL AUTO SPIN":"AUTO SPIN";
+    btn.classList.toggle("auto-spin-active",active);
+  });
+}
+function stopAutoSpin(){
+  autoSpinCrateId=null;
+  clearTimeout(autoSpinCancelTimer);
+  autoSpinCancelTimer=null;
+  updateAutoSpinButtons();
+}
+function startAutoSpin(id){
+  const a=account(), c=crates.find(x=>x.id===id);
+  if(!a||!c)return;
+  if(autoSpinCrateId===id){ stopAutoSpin(); return; }
+  if(autoSpinCrateId) stopAutoSpin();
+  autoSpinCrateId=id;
+  updateAutoSpinButtons();
+  if(!rolling) openCrate(id);
+}
+function continueAutoSpin(){
+  if(!autoSpinCrateId)return;
+  const id=autoSpinCrateId, a=account(), c=crates.find(x=>x.id===id);
+  if(!a||!c||a.credits<c.cost){ stopAutoSpin(); return; }
+  autoSpinCancelTimer=setTimeout(()=>{
+    autoSpinCancelTimer=null;
+    if(autoSpinCrateId===id&&!rolling) openCrate(id);
+  },700);
+}
+
 function showContents(id){
   const c=crates.find(x=>x.id===id); if(!c)return;
   $("#contentsEyebrow").textContent=`${c.tier.toUpperCase()} // CONTENTS`;
@@ -286,6 +314,7 @@ function showContents(id){
 }
 async function openCrate(id){
   if(rolling)return;
+  if(autoSpinCrateId && autoSpinCrateId!==id) stopAutoSpin();
   const a=account(); const c=crates.find(x=>x.id===id); if(!a||!c)return;
   if(a.credits<c.cost){alert(`Not enough virtual credits. You need ${money(c.cost)} C.`);return;}
   const entries=getCrateEntries(c);
@@ -401,6 +430,7 @@ function finishRoll(r){
   $("#resultRarity").textContent=`${r.rarity} • ${pendingChance.toFixed(pendingChance<1?4:2)}% chance in ${cNameSafe(currentCrate?.name)}`;
   $("#resultEffect").textContent=r.effect;
   $("#rollResult").classList.remove("hidden");
+  continueAutoSpin();
 }
 function cNameSafe(name){return String(name||"this crate").replace(/[<>]/g,"");}
 
@@ -813,7 +843,7 @@ function wireEvents(){
 $$("[data-close]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.close;closeModal(id);if(id==="signupModal"&&!account())$("#authGate")?.classList.remove("hidden");}));
 $$(".nav-btn").forEach(b=>b.addEventListener("click",()=>switchPage(b.dataset.page)));
 $$(".filter").forEach(b=>b.addEventListener("click",()=>{$$(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderCrates(b.dataset.filter)}));
-$("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);});
+$("#crateGrid").addEventListener("click",e=>{const view=e.target.closest("[data-view-crate]");const open=e.target.closest("[data-open-crate]");const auto=e.target.closest("[data-auto-spin]");if(view)showContents(view.dataset.viewCrate);if(open)openCrate(open.dataset.openCrate);if(auto)startAutoSpin(auto.dataset.autoSpin);});
 $("#inventoryGrid").addEventListener("click",e=>{
   const equip=e.target.closest("[data-equip-role]");
   const sell=e.target.closest("[data-sell-role]");

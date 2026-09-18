@@ -38,7 +38,7 @@ window.SSML_SPECIAL_EFFECTS = [
     image: "The wheel (1).png",
     sound: "assets/Doom effect.mp3",
     volume: 0.9,
-    glowColor: "#ffffff"
+    glowColor: "#ff4a00"
   },
 
    {
@@ -48,7 +48,7 @@ window.SSML_SPECIAL_EFFECTS = [
     image: "The wheel (1).png",
     sound: "assets/Doom effect.mp3",
     volume: 0.10,
-    glowColor: "#ffffff"
+    glowColor: "#ff4a00"
   }
 
   // ----------------------------------------------------------
