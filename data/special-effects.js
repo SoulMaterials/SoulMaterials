@@ -45,7 +45,7 @@ window.SSML_SPECIAL_EFFECTS = [
     animation: "spin-expand",
     image: "The wheel.png",
     sound: "assets/Angelic hit.mp3",
-    volume: 0.8
+    volume: 0.10
   }
 
   // ----------------------------------------------------------
