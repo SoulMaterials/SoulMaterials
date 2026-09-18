@@ -1,11 +1,11 @@
 window.SSML_CRATE_DATA = window.SSML_CRATE_DATA || [];
 
 window.SSML_CRATE_DATA.push({
-    id: "Fallen-Eyes",
+    id: "darkness-take-over-fallen-darkness",
 
     name: "D-A-R-K-N-E-S-S--T-A-K-E-O-V-E-R-F-A-L-L-E-N--D-A-R-K-N-E-S-S"
 
-    tier: "mythic",
+    tier: "ULTRA",
 
     // CHANGE THIS IMAGE URL TO YOUR CRATE IMAGE
     image: "https://media.discordapp.net/attachments/1535462023402364938/1550335846153199736/8mPh54AAAABklEQVQDAAewLLuLaaxtAAAAAElFTkSuQmCC.png?ex=6aadf645&is=6aaca4c5&hm=577ebfd134ecc6631d6dc94abb5759d95e119ee8d658d671a072bf1b052cd26e&=&format=webp&quality=lossless",
@@ -29,7 +29,7 @@ window.SSML_CRATE_DATA.push({
 
             name: "F-E-L-L-O-W🪽",
 
-            rarity: "KISHIN⚔️",
+            rarity: "ULTRA",
 
             // EXTREMELY HARD TO GET
             chance: 0.01,
@@ -70,7 +70,7 @@ window.SSML_CRATE_DATA.push({
 
             name: "Cash💵",
 
-            rarity: "Money Nigga!",
+            rarity: "mythic",
 
             chance: 50,
 
