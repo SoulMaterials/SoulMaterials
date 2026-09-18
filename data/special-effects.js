@@ -44,7 +44,7 @@ window.SSML_SPECIAL_EFFECTS = [
     enabled: true,
     animation: "spin-expand",
     image: "The wheel.png",
-    sound: "assets/Angelic hit.mp3",
+    sound: "assets/Doom effect.mp3",
     volume: 0.10
   }
 

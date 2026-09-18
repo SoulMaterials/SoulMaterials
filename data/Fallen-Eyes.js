@@ -16,7 +16,7 @@ window.SSML_CRATE_DATA.push({
     // CHANGE THE CRATE GLOW COLOR HERE
     accent: "#ffffff",
 
-    desc: "A forbidden Halloween archive. One title is almost impossible to obtain.",
+    desc: "The darkness take over for kishins. one of the 2 Very kings of death. If tamed You'd have a strong kishin. if you have two of them? they can work together",
 
     roles: [
 
