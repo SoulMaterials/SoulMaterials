@@ -51,3 +51,18 @@ The credits in this project are virtual archive credits only and have no real-mo
 ## GitHub Pages
 
 The frontend can still be opened as a static site, but cross-device shared features require the Render Web Service and PostgreSQL connection.
+
+### Special roll hit effects
+Admin → ARCHIVE EDITOR → SPECIAL now supports per-title hit effects. Select any title as TARGET, copy an existing effect (Saint is included by default), then change the IMAGE PATH and/or SOUND PATH before saving. The roll system itself is unchanged.
+
+Effect image/sound paths are relative to the `Gamble/` folder. For example:
+- `saint-hit.png`
+- `assets/my-title-hit.png`
+- `assets/my-sound.mp3`
+
+The current Saint rotation is the `spin-expand` preset. Copying it to another title reuses that same animation while allowing a different image and sound.
+
+
+## Easy special title effects
+
+Edit `data/special-effects.js` when you want to add or duplicate a title hit effect. Copy an existing block, change `title`, `image`, and `sound`, and optionally set `copyFrom` to the title whose animation you want to reuse. You do not need to edit `app.js`.

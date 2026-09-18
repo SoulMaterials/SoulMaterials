@@ -1,22 +1,13 @@
 // Edit this crate here: price, crate color, and every role's rarity/chance/color/price/effect.
 window.SSML_CRATE_DATA = window.SSML_CRATE_DATA || [];
 window.SSML_CRATE_DATA.push({
-  "id": "unknown-file",
-  "name": "UNKNOWN FILE",
+  "id": "Starter-Box",
+  "name": "ANCIENT GOD",
   "tier": "mythic",
-  "cost": 10000000,
-  "desc": "The highest-cost crate currently in the prototype.",
-  "accent": "#ff00ff",
+  "cost": 1000,
+  "desc": "For collectors chasing the deepest records.",
+  "accent": "#a77bff",
   "roles": [
-    {
-      "id": "unknown",
-      "name": "UNKNOWN",
-      "rarity": "ULTRA",
-      "effect": "Reality-error aura",
-      "chance": 0.001,
-      "color": "#ff00ff",
-      "price": 5000000
-    },
     {
       "id": "god-of-the-archive",
       "name": "God of the Archive",
@@ -25,6 +16,15 @@ window.SSML_CRATE_DATA.push({
       "chance": 0.003,
       "color": "#ffffff",
       "price": 2500000
+    },
+    {
+      "id": "unknown",
+      "name": "UNKNOWN",
+      "rarity": "ULTRA",
+      "effect": "Reality-error aura",
+      "chance": 0.001,
+      "color": "#ff00ff",
+      "price": 5000000
     },
     {
       "id": "company-breaker",
@@ -36,15 +36,6 @@ window.SSML_CRATE_DATA.push({
       "price": 1750000
     },
     {
-      "id": "the-last-sinner",
-      "name": "The Last Sinner",
-      "rarity": "ULTRA",
-      "effect": "Final crimson mark",
-      "chance": 0.008,
-      "color": "#ff294f",
-      "price": 1500000
-    },
-    {
       "id": "hollow-kingdom",
       "name": "Hollow Kingdom",
       "rarity": "ULTRA",
@@ -52,6 +43,24 @@ window.SSML_CRATE_DATA.push({
       "chance": 0.009,
       "color": "#a8a8ff",
       "price": 1250000
+    },
+    {
+      "id": "eternal",
+      "name": "Eternal",
+      "rarity": "ULTRA",
+      "effect": "Eternal RGB crown",
+      "chance": 0.012,
+      "color": "#ffffff",
+      "price": 1100000
+    },
+    {
+      "id": "angelic-praise",
+      "name": "Angelic Praise",
+      "rarity": "ULTRA",
+      "effect": "Large wings + halo",
+      "chance": 0.012,
+      "color": "#ffffff",
+      "price": 1000000
     }
   ]
 });

@@ -34,11 +34,66 @@ function loadArchiveState(){
 }
 const state = loadArchiveState();
 let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
-const SAINT_HIT_ROLE_ID = "saint-of-the-hallow-night-forgotten-pumpkin-kishin";
-const SAINT_HIT_EFFECT_STORAGE = "ssmlSaintHitEffectV1";
-let saintHitEffectEnabled = localStorage.getItem(SAINT_HIT_EFFECT_STORAGE) !== "false";
-let saintHitRaf = 0;
-let saintHitLastCenters = new Map();
+const SPECIAL_EFFECTS_STORAGE = "ssmlSpecialRollEffectsV2";
+const DEFAULT_SPECIAL_EFFECT = {
+  enabled: true,
+  animation: "spin-expand",
+  image: "saint-hit.png",
+  sound: "assets/Doom effect.mp3",
+  volume: 0.9
+};
+const DEFAULT_SPECIAL_EFFECTS = {
+  "saint-of-the-hallow-night-forgotten-pumpkin-kishin": { ...DEFAULT_SPECIAL_EFFECT }
+};
+function loadSpecialEffects(){
+  try {
+    const parsed=JSON.parse(localStorage.getItem(SPECIAL_EFFECTS_STORAGE)||"null");
+    if(parsed && typeof parsed === "object") return parsed;
+  } catch (_) {}
+  return {...DEFAULT_SPECIAL_EFFECTS};
+}
+function buildConfiguredSpecialEffects(){
+  const configured=window.SSML_SPECIAL_EFFECTS || [];
+  const byName=new Map(roles.map(r=>[String(r.name).trim(),r.id]));
+  const result={...loadSpecialEffects()};
+
+  for(const item of configured){
+    if(!item || !item.title) continue;
+    const roleId=byName.get(String(item.title).trim());
+    if(!roleId){
+      console.warn(`Special effect title not found: ${item.title}`);
+      continue;
+    }
+
+    let base={...DEFAULT_SPECIAL_EFFECT};
+    if(item.copyFrom){
+      const sourceId=byName.get(String(item.copyFrom).trim());
+      if(sourceId && result[sourceId]) base={...base,...result[sourceId]};
+    }
+
+    result[roleId]={
+      ...base,
+      ...item,
+      title: undefined,
+      copyFrom: undefined
+    };
+    delete result[roleId].title;
+    delete result[roleId].copyFrom;
+  }
+
+  return result;
+}
+const specialEffects = buildConfiguredSpecialEffects();
+function specialEffectFor(roleId){
+  const e=specialEffects[roleId];
+  if(!e) return null;
+  return {...DEFAULT_SPECIAL_EFFECT,...e};
+}
+function saveSpecialEffects(){
+  localStorage.setItem(SPECIAL_EFFECTS_STORAGE,JSON.stringify(specialEffects));
+}
+let specialHitRaf = 0;
+let specialHitLastCenters = new Map();
 
 function uid(){ return "u_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function money(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString(); }
@@ -239,39 +294,44 @@ function openCrate(id){
   animateCurrency(c.cost,"spend"); save(); startRoll(c,picked);
 }
 function tileMarkup(r){return `<div class="roll-tile" data-role-id="${escapeHtml(r.id)}" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`;}
-function playSaintHitSound(){
-  const sound=new Audio("assets/Doom effect.mp3");
-  sound.volume=.9;
+function playSpecialHitSound(effect){
+  if(!effect?.sound)return;
+  const sound=new Audio(effect.sound);
+  sound.volume=Math.min(1,Math.max(0,Number(effect.volume) || 0));
   sound.play().catch(()=>{});
 }
-function showSaintHit(){
-  if(!saintHitEffectEnabled)return;
-  const overlay=$("#saintHitOverlay");
-  if(!overlay)return;
-  overlay.classList.remove("saint-hit-active");
+function showSpecialHit(roleId){
+  const effect=specialEffectFor(roleId);
+  if(!effect?.enabled)return;
+  const overlay=$("#specialHitOverlay");
+  const image=$("#specialHitImage");
+  if(!overlay||!image)return;
+  image.src=effect.image || DEFAULT_SPECIAL_EFFECT.image;
+  overlay.dataset.animation=effect.animation || DEFAULT_SPECIAL_EFFECT.animation;
+  overlay.classList.remove("special-hit-active");
   void overlay.offsetWidth;
-  overlay.classList.add("saint-hit-active");
-  playSaintHitSound();
+  overlay.classList.add("special-hit-active");
+  playSpecialHitSound(effect);
 }
-function monitorSaintHits(){
-  cancelAnimationFrame(saintHitRaf);
-  saintHitLastCenters=new Map();
+function monitorSpecialHits(){
+  cancelAnimationFrame(specialHitRaf);
+  specialHitLastCenters=new Map();
   const tick=()=>{
     const track=$("#rollTrack"), windowEl=track?.parentElement;
-    if(!track||!windowEl){saintHitRaf=0;return;}
+    if(!track||!windowEl){specialHitRaf=0;return;}
     const pointerX=windowEl.getBoundingClientRect().left+windowEl.getBoundingClientRect().width/2;
     for(const tile of track.children){
       const rect=tile.getBoundingClientRect();
       const center=rect.left+rect.width/2;
-      const previous=saintHitLastCenters.get(tile);
-      if(tile.dataset.roleId===SAINT_HIT_ROLE_ID && previous!==undefined && previous>pointerX && center<=pointerX){
-        showSaintHit();
+      const previous=specialHitLastCenters.get(tile);
+      if(previous!==undefined && previous>pointerX && center<=pointerX){
+        showSpecialHit(tile.dataset.roleId);
       }
-      saintHitLastCenters.set(tile,center);
+      specialHitLastCenters.set(tile,center);
     }
-    if(rolling) saintHitRaf=requestAnimationFrame(tick); else saintHitRaf=0;
+    if(rolling) specialHitRaf=requestAnimationFrame(tick); else specialHitRaf=0;
   };
-  saintHitRaf=requestAnimationFrame(tick);
+  specialHitRaf=requestAnimationFrame(tick);
 }
 function startRoll(c,winner){
   rolling=true;
@@ -299,13 +359,13 @@ function startRoll(c,winner){
     track.style.transition="transform 6s cubic-bezier(.06,.82,.12,1)";
     track.style.transform=`translateX(-${target}px)`;
   }));
-  monitorSaintHits();
+  monitorSpecialHits();
   clearTimeout(rollTimer);
   rollTimer=setTimeout(()=>finishRoll(winner),6300);
 }
 function finishRoll(r){
   if(!rolling)return;
-  rolling=false; clearTimeout(rollTimer); cancelAnimationFrame(saintHitRaf); saintHitRaf=0; $("#skipRoll").classList.add("hidden");
+  rolling=false; clearTimeout(rollTimer); cancelAnimationFrame(specialHitRaf); specialHitRaf=0; $("#skipRoll").classList.add("hidden");
   const a=account(); if(!a)return;
   // On skip, snap to the exact winning tile before revealing the result.
   const track=$("#rollTrack");
@@ -655,17 +715,69 @@ function saveCrateEditor(){
   c.name=name;c.tier=tier;c.cost=Math.floor(cost);c.accent=color;c.desc=desc||"Archive crate.";c.pool=[...new Set(pool)];
   save(); renderCrateEditor(c.id); $("#configSaved").textContent=`SAVED ${c.name}`; setTimeout(()=>$("#configSaved").textContent="",1600);
 }
-function loadSpecialConfig(){
-  const checkbox=$("#saintHitEffectEnabled");
-  if(checkbox)checkbox.checked=saintHitEffectEnabled;
+function renderSpecialEffectEditor(selectedId){
+  const select=$("#specialEffectRole"); if(!select)return;
+  select.innerHTML=roles.filter(r=>r.id!=="administrative").map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} — ${r.rarity}</option>`).join("");
+  if(selectedId)select.value=selectedId;
+  loadSpecialEffectEditor();
 }
-function saveSpecialConfig(){
+function loadSpecialEffectEditor(){
+  const id=$("#specialEffectRole")?.value; if(!id)return;
+  const effect=specialEffectFor(id)||{...DEFAULT_SPECIAL_EFFECT,enabled:false};
+  $("#specialEffectEnabled").checked=!!effect.enabled;
+  $("#specialEffectAnimation").value=effect.animation||"spin-expand";
+  $("#specialEffectImage").value=effect.image||"";
+  $("#specialEffectSound").value=effect.sound||"";
+  $("#specialEffectVolume").value=effect.volume ?? 0.9;
+  const name=role(id)?.name||"TITLE";
+  $("#specialEffectPreview").textContent=`${name} // ${effect.animation||"spin-expand"}`;
+}
+function saveSpecialEffectEditor(){
   if(account()?.access!=="administrative")return;
-  saintHitEffectEnabled=!!$("#saintHitEffectEnabled")?.checked;
-  localStorage.setItem(SAINT_HIT_EFFECT_STORAGE,String(saintHitEffectEnabled));
-  $("#configSaved").textContent=saintHitEffectEnabled?"SAINT HIT EFFECT ENABLED":"SAINT HIT EFFECT DISABLED";
+  const id=$("#specialEffectRole")?.value; if(!id)return;
+  specialEffects[id]={
+    enabled:!!$("#specialEffectEnabled")?.checked,
+    animation:$("#specialEffectAnimation")?.value||"spin-expand",
+    image:$("#specialEffectImage")?.value.trim()||"",
+    sound:$("#specialEffectSound")?.value.trim()||"",
+    volume:Math.min(1,Math.max(0,Number($("#specialEffectVolume")?.value)||0))
+  };
+  saveSpecialEffects();
+  loadSpecialEffectEditor();
+  $("#configSaved").textContent=`SAVED EFFECT FOR ${role(id)?.name||id}`;
   setTimeout(()=>$("#configSaved").textContent="",1600);
 }
+function duplicateSpecialEffect(){
+  if(account()?.access!=="administrative")return;
+  const sourceId=$("#specialEffectSource")?.value;
+  const targetId=$("#specialEffectRole")?.value;
+  if(!sourceId||!targetId)return;
+  const source=specialEffectFor(sourceId);
+  if(!source){alert("That source title does not have an effect yet.");return;}
+  specialEffects[targetId]={...source};
+  saveSpecialEffects();
+  loadSpecialEffectEditor();
+  $("#configSaved").textContent=`COPIED EFFECT TO ${role(targetId)?.name||targetId}`;
+  setTimeout(()=>$("#configSaved").textContent="",1600);
+}
+function clearSpecialEffect(){
+  if(account()?.access!=="administrative")return;
+  const id=$("#specialEffectRole")?.value; if(!id)return;
+  delete specialEffects[id];
+  saveSpecialEffects();
+  loadSpecialEffectEditor();
+  $("#configSaved").textContent="SPECIAL EFFECT CLEARED";
+  setTimeout(()=>$("#configSaved").textContent="",1600);
+}
+function loadSpecialConfig(){
+  renderSpecialEffectEditor();
+  const source=$("#specialEffectSource");
+  if(source){
+    source.innerHTML=roles.filter(r=>specialEffectFor(r.id)).map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
+    if(specialEffectFor("saint-of-the-hallow-night-forgotten-pumpkin-kishin"))source.value="saint-of-the-hallow-night-forgotten-pumpkin-kishin";
+  }
+}
+function saveSpecialConfig(){ saveSpecialEffectEditor(); }
 function openConfig(){
   if(account()?.access!=="administrative")return;
   renderRoleEditor();renderCrateEditor();loadSpecialConfig();$("#configSaved").textContent="";showModal("configModal");
@@ -730,6 +842,9 @@ $("#crateEditorSelect")?.addEventListener("change",loadCrateEditor);
 $("#saveRoleEditor")?.addEventListener("click",saveRoleEditor);
 $("#saveCrateEditor")?.addEventListener("click",saveCrateEditor);
 $("#saveSpecialConfig")?.addEventListener("click",saveSpecialConfig);
+$("#specialEffectRole")?.addEventListener("change",loadSpecialEffectEditor);
+$("#duplicateSpecialEffect")?.addEventListener("click",duplicateSpecialEffect);
+$("#clearSpecialEffect")?.addEventListener("click",clearSpecialEffect);
 $$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
   $$("[data-config-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");
   $$(".config-panel").forEach(x=>x.classList.add("hidden"));

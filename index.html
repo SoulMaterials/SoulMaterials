@@ -96,7 +96,7 @@
     </div>
   </div>
 
-  <div id="saintHitOverlay" class="saint-hit-overlay" aria-hidden="true"><img src="saint-hit.png" alt=""></div>
+  <div id="specialHitOverlay" class="special-hit-overlay" aria-hidden="true"><img id="specialHitImage" src="saint-hit.png" alt=""></div>
 
   <div id="rollModal" class="modal hidden">
     <div class="modal-card roll-card">
@@ -239,8 +239,25 @@
       </section>
       <section id="specialConfig" class="config-panel hidden">
         <p class="eyebrow">SPECIAL ROLL EFFECTS</p>
-        <label class="effect-toggle"><input id="saintHitEffectEnabled" type="checkbox"><span><b>SAINT HIT EFFECT</b><small>Show the supplied Saint image + doom sound whenever the Saint title crosses the roll pointer.</small></span></label>
-        <button id="saveSpecialConfig" class="primary-btn full">SAVE SPECIAL EFFECT CONFIG</button>
+        <p class="modal-note">Give any title a special hit effect. To make another title use the exact same rotation, copy an existing effect, then change only its image/sound below.</p>
+        <label>TITLE / TARGET<select id="specialEffectRole" class="search-input"></select></label>
+        <div id="specialEffectPreview" class="editor-preview">TITLE // spin-expand</div>
+        <div class="editor-grid">
+          <label class="effect-toggle"><input id="specialEffectEnabled" type="checkbox"><span><b>ENABLE ON HIT</b><small>Trigger when this title crosses the roll pointer.</small></span></label>
+          <label>ANIMATION<select id="specialEffectAnimation"><option value="spin-expand">Spin + expand + fade (Saint)</option><option value="spin-expand-fast">Fast spin + expand + fade</option><option value="zoom-fade">Zoom + fade</option></select></label>
+          <label>IMAGE PATH<input id="specialEffectImage" placeholder="my-title-hit.png"></label>
+          <label>SOUND PATH<input id="specialEffectSound" placeholder="assets/my-sound.mp3"></label>
+          <label>SOUND VOLUME<input id="specialEffectVolume" type="number" min="0" max="1" step="0.05" value="0.9"></label>
+        </div>
+        <div class="effect-copy-box">
+          <div class="eyebrow">DUPLICATE AN EFFECT</div>
+          <div class="editor-grid">
+            <label>COPY FROM<select id="specialEffectSource" class="search-input"></select></label>
+            <div class="effect-copy-actions"><button id="duplicateSpecialEffect" class="secondary-btn">COPY TO TARGET</button><button id="clearSpecialEffect" class="secondary-btn">CLEAR TARGET</button></div>
+          </div>
+          <p class="tiny-note">Example: select a new title as TARGET, leave Saint as COPY FROM, click COPY TO TARGET, then replace the IMAGE PATH. The rotation behavior stays the same.</p>
+        </div>
+        <button id="saveSpecialConfig" class="primary-btn full">SAVE TITLE EFFECT</button>
       </section>
       <section id="crateConfig" class="config-panel hidden">
         <label>CRATE<select id="crateEditorSelect" class="search-input"></select></label>
@@ -259,6 +276,7 @@
     </div>
   </div>
 
+  <script src="data/special-effects.js"></script>
   <script src="data/absolute.js"></script>
   <script src="data/academy-files.js"></script>
   <script src="data/ancient-god.js"></script>
