@@ -208,3 +208,14 @@ img,video{max-width:100%;}
 @supports(padding:max(0px)){
   .shell{padding-bottom:max(55px,env(safe-area-inset-bottom));}
 }
+
+/* Saint title roll-hit overlay: additive effect only; existing roll UI/layout is unchanged. */
+.saint-hit-overlay{position:fixed;left:50%;top:50%;width:min(420px,70vw);height:min(420px,70vw);z-index:1000;pointer-events:none;opacity:0;visibility:hidden;transform:translate(-50%,-50%) scale(.3) rotate(0deg);will-change:transform,opacity;filter:drop-shadow(0 0 35px #ff4a00);}
+.saint-hit-overlay img{display:block;width:100%;height:100%;object-fit:contain;}
+.saint-hit-overlay.saint-hit-active{visibility:visible;animation:saintHitBurst 1.15s cubic-bezier(.14,.82,.22,1) forwards;}
+@keyframes saintHitBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0deg)}12%{opacity:1;transform:translate(-50%,-50%) scale(.85) rotate(-95deg)}35%{opacity:.95;transform:translate(-50%,-50%) scale(1.2) rotate(-235deg)}62%{opacity:.68;transform:translate(-50%,-50%) scale(1.52) rotate(-340deg)}82%{opacity:.32;transform:translate(-50%,-50%) scale(1.75) rotate(-405deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.95) rotate(-440deg)}}
+.effect-toggle{display:flex!important;grid-template-columns:none!important;gap:12px!important;align-items:center;padding:15px;border:1px solid var(--line);border-radius:10px;background:#ffffff04;cursor:pointer;}
+.effect-toggle input{width:18px!important;height:18px;margin:0;accent-color:#52e6ff;flex:none;}
+.effect-toggle span{display:grid;gap:5px;min-width:0;}
+.effect-toggle b{font:800 10px Orbitron;letter-spacing:1px;}
+.effect-toggle small{font-size:9px;color:var(--muted);line-height:1.5;}

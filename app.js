@@ -34,6 +34,11 @@ function loadArchiveState(){
 }
 const state = loadArchiveState();
 let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
+const SAINT_HIT_ROLE_ID = "saint-of-the-hallow-night-forgotten-pumpkin-kishin";
+const SAINT_HIT_EFFECT_STORAGE = "ssmlSaintHitEffectV1";
+let saintHitEffectEnabled = localStorage.getItem(SAINT_HIT_EFFECT_STORAGE) !== "false";
+let saintHitRaf = 0;
+let saintHitLastCenters = new Map();
 
 function uid(){ return "u_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function money(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString(); }
@@ -233,7 +238,41 @@ function openCrate(id){
   currentCrate=c; pendingRole=picked; pendingChance=pickedEntry?.chance||0; pendingCost=c.cost;
   animateCurrency(c.cost,"spend"); save(); startRoll(c,picked);
 }
-function tileMarkup(r){return `<div class="roll-tile" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`;}
+function tileMarkup(r){return `<div class="roll-tile" data-role-id="${escapeHtml(r.id)}" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`;}
+function playSaintHitSound(){
+  const sound=new Audio("assets/Doom effect.mp3");
+  sound.volume=.9;
+  sound.play().catch(()=>{});
+}
+function showSaintHit(){
+  if(!saintHitEffectEnabled)return;
+  const overlay=$("#saintHitOverlay");
+  if(!overlay)return;
+  overlay.classList.remove("saint-hit-active");
+  void overlay.offsetWidth;
+  overlay.classList.add("saint-hit-active");
+  playSaintHitSound();
+}
+function monitorSaintHits(){
+  cancelAnimationFrame(saintHitRaf);
+  saintHitLastCenters=new Map();
+  const tick=()=>{
+    const track=$("#rollTrack"), windowEl=track?.parentElement;
+    if(!track||!windowEl){saintHitRaf=0;return;}
+    const pointerX=windowEl.getBoundingClientRect().left+windowEl.getBoundingClientRect().width/2;
+    for(const tile of track.children){
+      const rect=tile.getBoundingClientRect();
+      const center=rect.left+rect.width/2;
+      const previous=saintHitLastCenters.get(tile);
+      if(tile.dataset.roleId===SAINT_HIT_ROLE_ID && previous!==undefined && previous>pointerX && center<=pointerX){
+        showSaintHit();
+      }
+      saintHitLastCenters.set(tile,center);
+    }
+    if(rolling) saintHitRaf=requestAnimationFrame(tick); else saintHitRaf=0;
+  };
+  saintHitRaf=requestAnimationFrame(tick);
+}
 function startRoll(c,winner){
   rolling=true;
   $("#rollCrateName").textContent=c.name;
@@ -260,12 +299,13 @@ function startRoll(c,winner){
     track.style.transition="transform 6s cubic-bezier(.06,.82,.12,1)";
     track.style.transform=`translateX(-${target}px)`;
   }));
+  monitorSaintHits();
   clearTimeout(rollTimer);
   rollTimer=setTimeout(()=>finishRoll(winner),6300);
 }
 function finishRoll(r){
   if(!rolling)return;
-  rolling=false; clearTimeout(rollTimer); $("#skipRoll").classList.add("hidden");
+  rolling=false; clearTimeout(rollTimer); cancelAnimationFrame(saintHitRaf); saintHitRaf=0; $("#skipRoll").classList.add("hidden");
   const a=account(); if(!a)return;
   // On skip, snap to the exact winning tile before revealing the result.
   const track=$("#rollTrack");
@@ -615,9 +655,20 @@ function saveCrateEditor(){
   c.name=name;c.tier=tier;c.cost=Math.floor(cost);c.accent=color;c.desc=desc||"Archive crate.";c.pool=[...new Set(pool)];
   save(); renderCrateEditor(c.id); $("#configSaved").textContent=`SAVED ${c.name}`; setTimeout(()=>$("#configSaved").textContent="",1600);
 }
+function loadSpecialConfig(){
+  const checkbox=$("#saintHitEffectEnabled");
+  if(checkbox)checkbox.checked=saintHitEffectEnabled;
+}
+function saveSpecialConfig(){
+  if(account()?.access!=="administrative")return;
+  saintHitEffectEnabled=!!$("#saintHitEffectEnabled")?.checked;
+  localStorage.setItem(SAINT_HIT_EFFECT_STORAGE,String(saintHitEffectEnabled));
+  $("#configSaved").textContent=saintHitEffectEnabled?"SAINT HIT EFFECT ENABLED":"SAINT HIT EFFECT DISABLED";
+  setTimeout(()=>$("#configSaved").textContent="",1600);
+}
 function openConfig(){
   if(account()?.access!=="administrative")return;
-  renderRoleEditor();renderCrateEditor();$("#configSaved").textContent="";showModal("configModal");
+  renderRoleEditor();renderCrateEditor();loadSpecialConfig();$("#configSaved").textContent="";showModal("configModal");
 }
 
 function wireEvents(){
@@ -678,6 +729,7 @@ $("#roleEditorSelect")?.addEventListener("change",loadRoleEditor);
 $("#crateEditorSelect")?.addEventListener("change",loadCrateEditor);
 $("#saveRoleEditor")?.addEventListener("click",saveRoleEditor);
 $("#saveCrateEditor")?.addEventListener("click",saveCrateEditor);
+$("#saveSpecialConfig")?.addEventListener("click",saveSpecialConfig);
 $$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
   $$("[data-config-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");
   $$(".config-panel").forEach(x=>x.classList.add("hidden"));

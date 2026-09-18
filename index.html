@@ -96,6 +96,8 @@
     </div>
   </div>
 
+  <div id="saintHitOverlay" class="saint-hit-overlay" aria-hidden="true"><img src="saint-hit.png" alt=""></div>
+
   <div id="rollModal" class="modal hidden">
     <div class="modal-card roll-card">
       <div class="roll-top">
@@ -221,7 +223,7 @@
       <p class="eyebrow">ADMINISTRATIVE // ARCHIVE CONFIG</p>
       <h2>ARCHIVE EDITOR</h2>
       <p class="muted">Crates and titles live in one <b>data/</b> folder, with one file per crate. These controls edit the current browser copy for testing.</p>
-      <div class="config-tabs"><button class="config-tab active" data-config-tab="roleConfig">ROLE / TITLE</button><button class="config-tab" data-config-tab="crateConfig">CRATE</button></div>
+      <div class="config-tabs"><button class="config-tab active" data-config-tab="roleConfig">ROLE / TITLE</button><button class="config-tab" data-config-tab="crateConfig">CRATE</button><button class="config-tab" data-config-tab="specialConfig">SPECIAL</button></div>
       <section id="roleConfig" class="config-panel">
         <label>ROLE / TITLE<select id="roleEditorSelect" class="search-input"></select></label>
         <div id="roleEditorPreview" class="editor-preview">TITLE PREVIEW</div>
@@ -234,6 +236,11 @@
           <label>EFFECT<input id="roleEditorEffect" maxlength="120"></label>
         </div>
         <button id="saveRoleEditor" class="primary-btn full">SAVE TITLE CONFIG</button>
+      </section>
+      <section id="specialConfig" class="config-panel hidden">
+        <p class="eyebrow">SPECIAL ROLL EFFECTS</p>
+        <label class="effect-toggle"><input id="saintHitEffectEnabled" type="checkbox"><span><b>SAINT HIT EFFECT</b><small>Show the supplied Saint image + doom sound whenever the Saint title crosses the roll pointer.</small></span></label>
+        <button id="saveSpecialConfig" class="primary-btn full">SAVE SPECIAL EFFECT CONFIG</button>
       </section>
       <section id="crateConfig" class="config-panel hidden">
         <label>CRATE<select id="crateEditorSelect" class="search-input"></select></label>
