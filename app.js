@@ -705,49 +705,129 @@ async function confirmSellTitle(){
 }
 
 async function signInExisting(){
-  const username=$("#loginUsername")?.value.trim();
-  const password=$("#loginPassword")?.value || "";
-  if(!username){alert("Enter your SSML username first.");return;}
-  if(!password){alert("Enter your password.");return;}
-  if(serverMode){
-    try{
-      const data=await apiRequest('/api/auth/login',{method:'POST',body:JSON.stringify({username,password})});
-      const found=mergeServerUser(data.user); state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id); return;
-    }catch(err){
-      // If this username exists in the old browser archive but not in PostgreSQL,
-      // restore it instead of telling the user that their account was deleted.
-      if(err.status===404){
-        const local=Object.values(state.accounts).find(a=>String(a.username||'').toLowerCase()===username.toLowerCase());
-        if(local){
-          if(local.passwordHash){
-            const hash=await hashPassword(password);
-            if(hash!==local.passwordHash){ alert("Incorrect password."); return; }
-          }
+  const username = String($("#loginUsername")?.value || "").trim();
+  const password = String($("#loginPassword")?.value || "");
+  if(!username){ alert("Enter your SSML username first."); return; }
+  if(!password){ alert("Enter your password."); return; }
+
+  // IMPORTANT: Check the browser archive FIRST. This protects accounts that
+  // were created before DATABASE_URL was connected or before a Render deploy.
+  // A server failure must never make a valid local account look deleted.
+  const local = Object.values(state.accounts || {}).find(a =>
+    String(a.username || "").trim().toLowerCase() === username.toLowerCase()
+  );
+
+  if(local){
+    // Older local accounts may not have a password hash. In that case the
+    // entered password becomes the password used when the archive is restored.
+    if(local.passwordHash){
+      const hash = await hashPassword(password);
+      if(hash !== local.passwordHash){
+        // The local password can be old while the shared server has the current
+        // password. Give the shared account a chance before rejecting it.
+        if(serverMode){
           try{
-            const restored=await apiRequest('/api/auth/restore',{method:'POST',body:JSON.stringify({
-              username,password,avatar:local.avatar,banner:local.banner,bio:local.bio,access:local.access,
-              credits:local.credits,inventory:local.inventory,following:local.following,followers:local.followers,friends:local.friends,
-              titleId:local.titleId,equippedTitleId:local.equippedTitleId,legacyId:local.id
-            })});
-            const found=mergeServerUser(restored.user);
-            state.activeUserId=found.id;
-            save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
-            alert("Your old SSML account was restored. Your archive data was kept.");
+            const data = await apiRequest('/api/auth/login', {
+              method:'POST',
+              body:JSON.stringify({username,password})
+            });
+            const found = mergeServerUser(data.user);
+            state.activeUserId = found.id;
+            save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden");
+            renderAll(); openProfile(found.id); return;
+          }catch(_){ /* fall through to the local password error */ }
+        }
+        alert("Incorrect password.");
+        return;
+      }
+    }
+
+    // Local password is valid (or this is a legacy account). Save the local
+    // session immediately, then sync/restore it on the shared server.
+    state.activeUserId = local.id;
+    local.passwordHash = local.passwordHash || await hashPassword(password);
+    ensureAccountShape(local);
+    save();
+    closeModal("signupModal");
+    $("#authGate")?.classList.add("hidden");
+    renderAll();
+
+    if(serverMode){
+      try{
+        // If the shared account already exists, sign in and merge the server
+        // copy so the database remains the source of truth across devices.
+        const data = await apiRequest('/api/auth/login', {
+          method:'POST',
+          body:JSON.stringify({username,password})
+        });
+        const found = mergeServerUser(data.user);
+        // Keep the locally verified password hash so the browser can still
+        // recover the session if the server is temporarily unavailable.
+        found.passwordHash = local.passwordHash;
+        state.activeUserId = found.id;
+        save(); renderAll(); openProfile(found.id); return;
+      }catch(err){
+        // 404 means the account existed locally but was never persisted to the
+        // database (for example, it was created before DATABASE_URL was added).
+        // Restore it instead of forcing the user to create a new account.
+        if(err.status === 404 || err.status === 500 || err.status === 503){
+          try{
+            const restored = await apiRequest('/api/auth/restore', {
+              method:'POST',
+              body:JSON.stringify({
+                username,password,
+                avatar:local.avatar,banner:local.banner,bio:local.bio,access:local.access,
+                credits:local.credits,inventory:local.inventory,
+                following:local.following,followers:local.followers,friends:local.friends,
+                titleId:local.titleId,equippedTitleId:local.equippedTitleId,legacyId:local.id
+              })
+            });
+            const found = mergeServerUser(restored.user);
+            found.passwordHash = local.passwordHash;
+            state.activeUserId = found.id;
+            save(); renderAll(); openProfile(found.id);
             return;
           }catch(restoreErr){
-            if(restoreErr.status===409){ alert("That username already exists on the shared SSML server. Use the password for that account."); return; }
-            console.error(restoreErr); alert("Your old account was found, but SSML could not restore it right now. Please try again."); return;
+            // If another copy was already created, keep the local session alive.
+            if(restoreErr.status !== 409) console.warn("SSML account sync delayed:", restoreErr);
           }
         }
+        // Server is unavailable: the local account remains usable and is NOT
+        // deleted. It will sync on a later successful connection.
+        console.warn("SSML shared account sync delayed:", err);
+        openProfile(local.id);
+        return;
       }
-      alert(err.status===404?"That account does not exist on the shared SSML server.":err.status===401?"Incorrect password.":"The shared account server could not sign you in right now.");
+    }
+
+    openProfile(local.id);
+    return;
+  }
+
+  // No local copy: use the shared server directly. This is the normal path on
+  // a new device/browser.
+  if(serverMode){
+    try{
+      const data = await apiRequest('/api/auth/login', {
+        method:'POST', body:JSON.stringify({username,password})
+      });
+      const found = mergeServerUser(data.user);
+      // Keep a browser-side verifier for recovery if the server is unavailable.
+      found.passwordHash = await hashPassword(password);
+      state.activeUserId = found.id;
+      save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden");
+      renderAll(); openProfile(found.id); return;
+    }catch(err){
+      alert(err.status===404
+        ? "That SSML account could not be found. If this is the account you created before the Render database was connected, open the original browser/device where you created it so SSML can recover its archive."
+        : err.status===401
+          ? "Incorrect password."
+          : "The shared account server could not sign you in right now. Your account was NOT deleted.");
       return;
     }
   }
-  const found=Object.values(state.accounts).find(a=>a.username.toLowerCase()===username.toLowerCase());
-  if(!found){ alert("That SSML account was not found. Please create or sign in with a current password-protected account."); return; }
-  const hash=await hashPassword(password); if(hash!==found.passwordHash){ alert("Incorrect password."); return; }
-  state.activeUserId=found.id; save(); closeModal("signupModal"); $("#authGate")?.classList.add("hidden"); renderAll(); openProfile(found.id);
+
+  alert("The SSML account server is offline right now. Your account was NOT deleted. Try again when the server is online.");
 }
 
 
