@@ -73,6 +73,22 @@ async function initDb() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+
+  // ONE-TIME ACCOUNT RESET for the fresh SSML launch. The marker lives in the
+  // database, so this cannot keep deleting accounts after the first startup.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ssml_system_flags (
+      flag TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  const resetFlag = 'fresh_start_2026_09_18_v1';
+  const existing = await pool.query('SELECT 1 FROM ssml_system_flags WHERE flag=$1 LIMIT 1', [resetFlag]);
+  if (!existing.rowCount) {
+    await pool.query('DELETE FROM users');
+    await pool.query('INSERT INTO ssml_system_flags(flag) VALUES($1) ON CONFLICT (flag) DO NOTHING', [resetFlag]);
+    console.log('[SSML] Old accounts cleared once for the fresh start.');
+  }
 }
 
 async function findByUsername(username) {

@@ -33,6 +33,37 @@ function loadArchiveState(){
   return {activeUserId:null,accounts:{},activity:[],guestSeeded:false};
 }
 const state = loadArchiveState();
+
+// One-time fresh start: clear the old browser accounts so everyone can make
+// a brand-new SSML account. The version marker prevents this from deleting
+// newly-created accounts again on later refreshes.
+const ACCOUNT_RESET_VERSION = "ssml-fresh-start-2026-09-18-v1";
+function resetOldAccountsOnce(){
+  try {
+    if(localStorage.getItem(ACCOUNT_RESET_VERSION) === "done") return;
+    state.activeUserId = null;
+    state.accounts = {};
+    state.activity = [];
+    state.guestSeeded = false;
+    localStorage.removeItem(STORAGE);
+    localStorage.removeItem("ssmlRareArchiveV3");
+    localStorage.removeItem("ssmlArchiveState");
+    localStorage.setItem(ACCOUNT_RESET_VERSION, "done");
+  } catch(error) {
+    console.warn("Could not clear the old local SSML accounts.", error);
+  }
+}
+
+// The account modal uses this function for the main SIGN IN / JOIN SSML button.
+// A missing function here used to stop wireEvents() halfway through, which made
+// the sign-in and join buttons appear completely dead.
+function openAuth(){
+  $("#signupStep1")?.classList.remove("hidden");
+  $("#signupStep2")?.classList.add("hidden");
+  $("#adminStep")?.classList.add("hidden");
+  $("#adminError") && ($("#adminError").textContent = "");
+  showModal("signupModal");
+}
 let currentCrate=null, rolling=false, rollTimer=null, pendingRole=null, pendingCost=0, pendingChance=0, rollWinnerIndex=34;
 let autoSpinCrateId=null, autoSpinCancelTimer=null;
 const SPECIAL_EFFECTS_STORAGE = "ssmlSpecialRollEffectsV2";
@@ -1018,6 +1049,7 @@ document.addEventListener("click",(e)=>{
 
 async function bootSSML(){
   try {
+    resetOldAccountsOnce();
     await detectServer();
     // Migrate the previous prototype before rendering or deciding whether the gate is needed.
     (function migrateOld(){
