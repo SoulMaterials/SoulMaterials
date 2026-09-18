@@ -102,8 +102,10 @@ function account(){ return state.accounts[state.activeUserId] || null; }
 // Render shared-data bridge. GitHub Pages can still run the local-only fallback,
 // while the Render web service uses the shared API/database.
 let serverMode = false;
+// Shared API: Render serves the app itself, while GitHub Pages can use the same Render backend.
+const API_BASE = (window.SSML_API_BASE || (location.hostname.endsWith('github.io') ? 'https://soulmaterials-1.onrender.com' : '')).replace(/\/$/, '');
 async function apiRequest(path, options={}){
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: { "Content-Type":"application/json", ...(options.headers||{}) }
   });
@@ -282,7 +284,7 @@ function showContents(id){
   $("#contentsNote").textContent=`${c.pool.length} titles • ${money(c.cost)} credits • higher-cost crates contain stronger rarity pools.`;
   showModal("contentsModal");
 }
-function openCrate(id){
+async function openCrate(id){
   if(rolling)return;
   const a=account(); const c=crates.find(x=>x.id===id); if(!a||!c)return;
   if(a.credits<c.cost){alert(`Not enough virtual credits. You need ${money(c.cost)} C.`);return;}
@@ -291,6 +293,14 @@ function openCrate(id){
   const pickedEntry=entries.find(e=>e.role.id===picked.id);
   a.credits-=c.cost;
   currentCrate=c; pendingRole=picked; pendingChance=pickedEntry?.chance||0; pendingCost=c.cost;
+  if(serverMode){
+    try{
+      const data=await apiRequest(`/api/users/${encodeURIComponent(a.id)}/archive`,{method:'POST',body:JSON.stringify({requesterId:a.id,credits:a.credits,inventory:a.inventory})});
+      mergeServerUser(data.user);
+    }catch(err){
+      console.error(err); a.credits+=c.cost; save(); alert("The shared archive could not save this crate opening. Nothing was spent."); return;
+    }
+  }
   animateCurrency(c.cost,"spend"); save(); startRoll(c,picked);
 }
 function tileMarkup(r){return `<div class="roll-tile" data-role-id="${escapeHtml(r.id)}" style="--glow:${r.glow}"><strong>${escapeHtml(r.name)}</strong><small>${r.rarity}</small></div>`;}
@@ -308,6 +318,7 @@ function showSpecialHit(roleId){
   if(!overlay||!image)return;
   image.src=effect.image || DEFAULT_SPECIAL_EFFECT.image;
   overlay.dataset.animation=effect.animation || DEFAULT_SPECIAL_EFFECT.animation;
+  overlay.style.setProperty("--specialGlow",effect.glowColor || DEFAULT_SPECIAL_EFFECT.glowColor || "#ff4a00");
   overlay.classList.remove("special-hit-active");
   void overlay.offsetWidth;
   overlay.classList.add("special-hit-active");
@@ -377,6 +388,11 @@ function finishRoll(r){
     track.style.transform=`translateX(-${target}px)`;
   }
   a.inventory[r.id]=(a.inventory[r.id]||0)+1;
+  if(serverMode){
+    apiRequest(`/api/users/${encodeURIComponent(a.id)}/archive`,{method:'POST',body:JSON.stringify({requesterId:a.id,credits:a.credits,inventory:a.inventory})})
+      .then(data=>{ mergeServerUser(data.user); save(); })
+      .catch(err=>console.error("Could not sync unlocked title to shared archive",err));
+  }
   log(`Unlocked "${r.name}" • ${r.rarity}`,r.glow); save();
   $("#rollStatus").textContent="ARCHIVE LOCKED";
   $("#resultGlow").style.setProperty("--resultGlow",r.glow);
@@ -631,27 +647,36 @@ async function giftCredits(){
   setTimeout(()=>$("#giftSuccess").textContent="",1800);
 }
 function sellTitle(id){
-  const a=account(), r=role(id); if(!a||!r||!(a.inventory[id]>0))return;
-  const code=prompt(`SELL "${r.name}" for ${money(r.value)} virtual credits.\nEnter SELL-SSML to confirm:`);
-  if(code!=="SELL-SSML"){if(code!==null)alert("Sale cancelled: incorrect code.");return;}
-  a.inventory[id]--; if(a.inventory[id]<=0)delete a.inventory[id]; a.credits+=r.value; animateCurrency(r.value,"add"); log(`Sold "${r.name}" for ${money(r.value)} credits`,r.glow); save();
+  const a=account(), r=role(id);
+  const owned=Number(a?.inventory?.[id]||0);
+  if(!a||!r||owned<1)return;
+  const modal=$("#sellModal"), qty=$("#sellQuantity");
+  $("#sellTitleName").textContent=r.name;
+  $("#sellOwned").textContent=`YOU OWN x${owned}`;
+  $("#sellUnitValue").textContent=`${money(r.value)} C EACH`;
+  $("#sellTotal").textContent=`${money(r.value)} C`;
+  qty.max=String(owned); qty.min="1"; qty.value="1";
+  modal.dataset.roleId=id; modal.classList.remove("hidden");
+}
+async function confirmSellTitle(){
+  const a=account(), modal=$("#sellModal"), id=modal.dataset.roleId, r=role(id);
+  const owned=Number(a?.inventory?.[id]||0), qty=Math.floor(Number($("#sellQuantity").value));
+  if(!a||!r||qty<1||qty>owned)return;
+  const total=r.value*qty;
+  if(serverMode){
+    try{
+      const data=await apiRequest(`/api/users/${encodeURIComponent(a.id)}/sell`,{method:'POST',body:JSON.stringify({requesterId:a.id,roleId:id,quantity:qty,unitValue:r.value})});
+      mergeServerUser(data.user);
+    }catch(err){ console.error(err); alert(err.status===400?"You don't have enough copies to sell that many.":"The shared archive could not complete the sale."); return; }
+  } else {
+    a.inventory[id]-=qty; if(a.inventory[id]<=0)delete a.inventory[id]; a.credits+=total;
+  }
+  closeModal("sellModal");
+  animateCurrency(total,"add");
+  log(`Sold x${qty} "${r.name}" for ${money(total)} credits`,r.glow);
+  save();
 }
 
-function resetSignup(){
-  $("#signupStep1")?.classList.remove("hidden");
-  $("#signupStep2")?.classList.add("hidden");
-  $("#adminStep")?.classList.add("hidden");
-  $("#adminError") && ($("#adminError").textContent = "");
-  $("#adminCode") && ($("#adminCode").value = "");
-  $("#loginUsername") && ($( "#loginUsername").value = "");
-  $("#loginPassword") && ($("#loginPassword").value = "");
-  $("#passwordInput") && ($("#passwordInput").value = "");
-}
-function openAuth(){
-  resetSignup();
-  $("#authGate")?.classList.add("hidden");
-  showModal("signupModal");
-}
 async function signInExisting(){
   const username=$("#loginUsername")?.value.trim();
   const password=$("#loginPassword")?.value || "";
@@ -740,7 +765,8 @@ function saveSpecialEffectEditor(){
     animation:$("#specialEffectAnimation")?.value||"spin-expand",
     image:$("#specialEffectImage")?.value.trim()||"",
     sound:$("#specialEffectSound")?.value.trim()||"",
-    volume:Math.min(1,Math.max(0,Number($("#specialEffectVolume")?.value)||0))
+    volume:Math.min(1,Math.max(0,Number($("#specialEffectVolume")?.value)||0)),
+    glowColor:$("#specialEffectGlowColor")?.value || "#ff4a00"
   };
   saveSpecialEffects();
   loadSpecialEffectEditor();

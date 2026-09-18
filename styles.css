@@ -227,3 +227,16 @@ img,video{max-width:100%;}
 .effect-toggle span{display:grid;gap:5px;min-width:0;}
 .effect-toggle b{font:800 10px Orbitron;letter-spacing:1px;}
 .effect-toggle small{font-size:9px;color:var(--muted);line-height:1.5;}
+
+/* SELL QUANTITY + CONFIRMATION */
+.sell-card{width:min(560px,96vw)}
+.sell-title-preview{display:grid;gap:8px;padding:16px;margin:18px 0;border:1px solid var(--line);border-radius:11px;background:#ffffff04}
+.sell-title-preview b{font:800 18px Orbitron;overflow-wrap:anywhere}
+.sell-title-preview span{font-size:9px;color:var(--muted);letter-spacing:1px}
+.sell-total{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;border:1px solid #ff536e33;border-radius:10px;background:#ff536e08;margin-top:5px}
+.sell-total span{font:800 9px Orbitron;color:var(--muted);letter-spacing:1.5px}.sell-total strong{font:800 18px Orbitron;color:var(--red);text-shadow:0 0 18px #ff536e55}
+.sell-warning{color:#ff7186!important;font-weight:800}
+.profile-backpack-action{padding:0 28px 10px}.profile-backpack-action button{width:100%}
+.special-hit-overlay{filter:drop-shadow(0 0 35px var(--specialGlow,#ff4a00)) drop-shadow(0 0 70px var(--specialGlow,#ff4a00));}
+.effect-copy-box .editor-preview{box-shadow:0 0 25px color-mix(in srgb,var(--effectGlow,#ff4a00) 18%,transparent);border-color:color-mix(in srgb,var(--effectGlow,#ff4a00) 35%,transparent)}
+@media(max-width:650px){.profile-backpack-action{padding-left:18px;padding-right:18px}.sell-card .result-actions{flex-direction:column}.sell-card .result-actions button{width:100%}}

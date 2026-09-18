@@ -7,19 +7,21 @@ const { Pool } = require('pg');
 const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const HOST = '0.0.0.0';
-const FRONTEND_URL = process.env.FRONTEND_URL || '';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://soulmaterials.github.io';
 
 app.use(express.json({ limit: '2mb' }));
-if (FRONTEND_URL) {
-  app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', FRONTEND_URL);
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '';
+  const allowed = !origin || origin === FRONTEND_URL || origin === 'https://soulmaterials.github.io' || origin === 'https://soulmaterials-1.onrender.com';
+  if (allowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin || FRONTEND_URL);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-    if (req.method === 'OPTIONS') return res.sendStatus(204);
-    next();
-  });
-}
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
 const pool = process.env.DATABASE_URL
   ? new Pool({ connectionString: process.env.DATABASE_URL, max: 5, ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false } })
@@ -230,6 +232,45 @@ app.post('/api/admin/set-credits', async (req, res) => {
     await saveUser(target);
     res.json({ admin: cleanUser(admin), target: cleanUser(target) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Could not set credits.' }); }
+});
+
+app.post('/api/users/:id/archive', async (req, res) => {
+  try {
+    const user = await findById(req.params.id);
+    if (!user || String(req.body?.requesterId || '') !== user.id) return res.status(403).json({ error: 'Not allowed.' });
+    if (req.body.credits !== undefined) {
+      const credits = Number(req.body.credits);
+      if (!Number.isFinite(credits) || credits < 0) return res.status(400).json({ error: 'Invalid credits.' });
+      user.credits = Math.floor(credits);
+    }
+    if (req.body.inventory && typeof req.body.inventory === 'object') user.inventory = req.body.inventory;
+    await saveUser(user);
+    res.json({ user: cleanUser(user) });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Could not save archive data.' }); }
+});
+
+app.post('/api/users/:id/sell', async (req, res) => {
+  try {
+    const user = await findById(req.params.id);
+    const roleId = String(req.body?.roleId || '');
+    const quantity = Math.floor(Number(req.body?.quantity));
+    if (!user || String(req.body?.requesterId || '') !== user.id) return res.status(403).json({ error: 'Not allowed.' });
+    if (!roleId || !Number.isInteger(quantity) || quantity < 1) return res.status(400).json({ error: 'Choose a valid quantity.' });
+    const inventory = typeof user.inventory === 'string' ? safeJson(user.inventory, {}) : (user.inventory || {});
+    const owned = Number(inventory[roleId] || 0);
+    if (quantity > owned) return res.status(400).json({ error: 'Not enough copies.' });
+    // The client supplies title values for display, but the server needs the same archive data.
+    // The actual unit value is supplied by the request and validated as a non-negative integer.
+    const unitValue = Math.floor(Number(req.body?.unitValue));
+    if (!Number.isFinite(unitValue) || unitValue < 0) return res.status(400).json({ error: 'Invalid title value.' });
+    const total = unitValue * quantity;
+    inventory[roleId] = owned - quantity;
+    if (inventory[roleId] <= 0) delete inventory[roleId];
+    user.inventory = inventory;
+    user.credits = Number(user.credits || 0) + total;
+    await saveUser(user);
+    res.json({ user: cleanUser(user), sold: quantity, total });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Could not complete the sale.' }); }
 });
 
 app.post('/api/users/:id/profile', async (req, res) => {

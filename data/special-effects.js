@@ -27,25 +27,28 @@ window.SSML_SPECIAL_EFFECTS = [
     animation: "spin-expand",
     image: "saint-hit.png",
     sound: "assets/Doom effect.mp3",
-    volume: 0.9
+    volume: 0.9,
+    glowColor: "#ff4a00"
   },
 
    {
     title: "F-E-L-L-O-W🪽",
     enabled: true,
     animation: "spin-expand",
-    image: "The wheel.png",
+    image: "The wheel (1).png",
     sound: "assets/Doom effect.mp3",
-    volume: 0.9
+    volume: 0.9,
+    glowColor: "#ffffff"
   },
 
    {
     title: "F-A-L-L-E-N-B-O-O-K-S-A-N-G-E-L",
     enabled: true,
     animation: "spin-expand",
-    image: "The wheel.png",
+    image: "The wheel (1).png",
     sound: "assets/Doom effect.mp3",
-    volume: 0.10
+    volume: 0.10,
+    glowColor: "#ffffff"
   }
 
   // ----------------------------------------------------------

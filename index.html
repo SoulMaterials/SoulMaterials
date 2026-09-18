@@ -121,6 +121,19 @@
     </div>
   </div>
 
+  <div id="sellModal" class="modal hidden">
+    <div class="modal-card sell-card">
+      <button class="close" data-close="sellModal">×</button>
+      <p class="eyebrow">BACKPACK // SELL TITLES</p>
+      <h2>SELL TITLE</h2>
+      <div class="sell-title-preview"><b id="sellTitleName">TITLE</b><span id="sellOwned">YOU OWN x1</span><span id="sellUnitValue">0 C EACH</span></div>
+      <label>HOW MANY TO SELL<input id="sellQuantity" class="search-input" type="number" min="1" value="1"></label>
+      <div class="sell-total"><span>TOTAL</span><strong id="sellTotal">0 C</strong></div>
+      <p class="modal-note sell-warning">ARE YOU SURE? YOU CANNOT UNDO THIS SALE.</p>
+      <div class="result-actions"><button id="confirmSell" class="primary-btn">YES, SELL THEM</button><button class="secondary-btn" data-close="sellModal">NO, KEEP THEM</button></div>
+    </div>
+  </div>
+
   <div id="signupModal" class="modal hidden">
     <div class="modal-card signup-card">
       <button class="close" data-close="signupModal">×</button>
@@ -171,6 +184,7 @@
       </div>
       <p id="profileBio" class="profile-bio"></p>
       <div id="profileSocialActions" class="profile-social-actions"></div>
+      <div class="profile-backpack-action"><button id="profileBackpack" class="secondary-btn">OPEN BACKPACK</button></div>
       <div class="profile-section-title">BACKPACK // TITLES WON</div><div id="profileInventory" class="profile-inventory"></div>
       <div class="profile-section-title">FRIENDS // ARCHIVE CIRCLE</div><div id="profileFriends" class="profile-friends"></div>
       <input id="profileAdminTarget" type="hidden">
@@ -248,6 +262,7 @@
           <label>IMAGE PATH<input id="specialEffectImage" placeholder="my-title-hit.png"></label>
           <label>SOUND PATH<input id="specialEffectSound" placeholder="assets/my-sound.mp3"></label>
           <label>SOUND VOLUME<input id="specialEffectVolume" type="number" min="0" max="1" step="0.05" value="0.9"></label>
+          <label>GLOW COLOR<input id="specialEffectGlowColor" type="color" value="#ff4a00" title="Color used for this special hit effect"></label>
         </div>
         <div class="effect-copy-box">
           <div class="eyebrow">DUPLICATE AN EFFECT</div>
