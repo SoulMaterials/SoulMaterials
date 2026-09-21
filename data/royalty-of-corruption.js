@@ -43,14 +43,14 @@ window.SSML_CRATE_DATA.push({
             effect: "KING OF THE SAINT'S"
         },
 
-         {
+        {
             id: "Rescue",
 
             name: "Rescue",
 
             rarity: "KISHIN⚔️",
 
-            chance: chance: 0.0001,,
+            chance: 0.0001,
 
             color: "#5700bb",
 
@@ -82,7 +82,7 @@ window.SSML_CRATE_DATA.push({
 
             rarity: "KISHIN⚔️",
 
-            chance: chance: 0.0001,,
+            chance: 0.0001,
 
             color: "#fff78b",
 
@@ -91,14 +91,14 @@ window.SSML_CRATE_DATA.push({
             effect: "Passive: Nornmin Gun's"
         },
 
-         {
+        {
             id: "Untitle-angelic-bloom",
 
             name: "U-N-T-I-T-L-E-A-N-G-E-L-I-C-B-L-O-O-M",
 
             rarity: "KISHIN⚔️",
 
-            chance: chance: 0.0001,,
+            chance: 0.0001,
 
             color: "#fff78b",
 
@@ -108,10 +108,8 @@ window.SSML_CRATE_DATA.push({
         },
 
         // =====================================================
-        // OTHER HALLOW KNIGHTS ROLES
+        // OTHER ROLES
         // =====================================================
-
-       
 
         {
             id: "A-stciker",
