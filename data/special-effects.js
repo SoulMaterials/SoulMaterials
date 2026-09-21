@@ -40,7 +40,33 @@ window.SSML_SPECIAL_EFFECTS = [
     volume: 0.9,
     glowColor: "#ff4a00"
   },
-
+  {
+    title: "A-L-Z-A-R-I-E-L",
+    enabled: true,
+    animation: "spin-expand",
+    image: "Glitch effect.gif",
+    sound: "assets/Glitch Sound Effect.mp3",
+    volume: 0.9,
+    glowColor: "#fffdfc"
+  },
+  {
+    title: "L-U-C-A-R-I-E-L [TOME]",
+    enabled: true,
+    animation: "spin-expand",
+    image: "Glitch effect.gif",
+    sound: "assets/Glitch Sound Effect.mp3",
+    volume: 0.9,
+    glowColor: "#fffdfc"
+  },
+  {
+    title: "E-R-A-E-L-I-O-N",
+    enabled: true,
+    animation: "spin-expand",
+    image: "Glitch effect.gif",
+    sound: "assets/Glitch Sound Effect.mp3",
+    volume: 0.9,
+    glowColor: "#fffdfc"
+  },
    {
     title: "F-A-L-L-E-N-B-O-O-K-S-A-N-G-E-L",
     enabled: true,

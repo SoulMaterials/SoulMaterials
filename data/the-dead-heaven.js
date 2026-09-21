@@ -5,13 +5,13 @@ window.SSML_CRATE_DATA.push({
 
     name: "T-H-E-D-E-A-D-H-E-A-V-E-N-S",
 
-    tier: "ROYALTY CORRUPTION",
+    tier: "ROTTEN HEAVEN'S",
 
    image: "assets/dreed.png",
 
     accent: "#ffe2e2",
 
-    desc: "The Golden Crown of Oakhaven did not tarnish from neglect; it rotted from within. What began as a desperate bargain to save a dying kingdom became the permanent bloodline known across the realms as the Royalty of Corruption.",
+    desc: "The corruption of the Alabaster Citadel did not remain contained within its weeping walls. As the royal family sank deeper into the decrees of their dark codex, their black magic punctured the celestial veil, giving rise to an era known as The Dead Heavens.",
 
     roles: [
 
