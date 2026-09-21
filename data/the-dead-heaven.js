@@ -7,9 +7,7 @@ window.SSML_CRATE_DATA.push({
 
     tier: "ROYALTY CORRUPTION",
 
-    image: "https://media.discordapp.net/attachments/1551589687200850101/1551607567656947843/content.png?ex=6ab296a7&is=6ab14527&hm=7259f8016d03aff7abc4ce795993765c74961813d65086ea27c04b625e1750db&=&format=webp&quality=lossless&width=1536&height=683",
-
-    cost: 12000000000000,
+   image: "assets/dreed.png",
 
     accent: "#ffe2e2",
 

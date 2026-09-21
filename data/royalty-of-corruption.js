@@ -8,8 +8,7 @@ window.SSML_CRATE_DATA.push({
     tier: "ROYALTY CORRUPTION",
 
     // CHANGE THIS IMAGE URL TO YOUR CRATE IMAGE
-    image: "https://media.discordapp.net/attachments/1535462023402364938/1550538716030705845/5e9a37cc-d889-4cc9-9a5a-3684635f3904.png?ex=6ab1fef5&is=6ab0ad75&hm=2c63f37e262f5173cef3f6eab9b12a877b20a896cb8f1932f6cf721b6acc00fe&=&format=webp&quality=lossless&width=1280&height=641",
-
+    image: "assets/King.png",
     // CHANGE THE CRATE PRICE HERE
     cost: 10000000,
 

@@ -8,7 +8,7 @@ window.SSML_CRATE_DATA.push({
     tier: "ULTRA",
 
     // CHANGE THIS IMAGE URL TO YOUR CRATE IMAGE
-    image: "https://media.discordapp.net/attachments/1535462023402364938/1550335846153199736/8mPh54AAAABklEQVQDAAewLLuLaaxtAAAAAElFTkSuQmCC.png?ex=6aadf645&is=6aaca4c5&hm=577ebfd134ecc6631d6dc94abb5759d95e119ee8d658d671a072bf1b052cd26e&=&format=webp&quality=lossless",
+    image: "https://media.discordapp.net/attachments/1535462023402364938/1550335846153199736/8mPh54AAAABklEQVQDAAewLLuLaaxtAAAAAElFTkSuQmCC.png?ex=6ab1eac5&is=6ab09945&hm=18fc0a20e01f777268503c170197b14994ee6730c5fcbcbc013eec0c461785f6&=&format=webp&quality=lossless",
 
     // CHANGE THE CRATE PRICE HERE
     cost: 10000000,
