@@ -10,6 +10,8 @@ window.SSML_CRATE_DATA.push({
    image: "assets/dreed.webp",
 
     accent: "#ffe2e2",
+    
+cost: 10000000,
 
     desc: "The corruption of the Alabaster Citadel did not remain contained within its weeping walls. As the royal family sank deeper into the decrees of their dark codex, their black magic punctured the celestial veil, giving rise to an era known as The Dead Heavens.",
 
