@@ -12,7 +12,7 @@ const FIXED_PASSWORD = process.env.SSML_ACCOUNT_PASSWORD || 'Drool56';
 const ADMIN_CODE = process.env.SSML_ADMIN_CODE || 'SSML-ADMIN';
 const STARTING_CREDITS = 999000;
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '12mb' }));
 app.use((req, res, next) => {
   const origin = req.headers.origin || '';
   const allowed = !origin || origin === FRONTEND_URL || origin === 'https://soulmaterials.github.io' || origin === 'https://soulmaterials-1.onrender.com';
@@ -209,11 +209,13 @@ app.post('/api/auth/login', async (req,res)=>{
 });
 
 app.get('/api/users', async (req, res) => {
+  res.setHeader('Cache-Control','no-store');
   try { res.json({ users: await listUsers(String(req.query.q || '').trim(), String(req.query.admin || '') === '1') }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Could not load users.' }); }
 });
 
 app.get('/api/users/:id', async (req, res) => {
+  res.setHeader('Cache-Control','no-store');
   try {
     const u = await findById(req.params.id);
     if (!u) return res.status(404).json({ error: 'User not found.' });
@@ -250,13 +252,30 @@ app.post('/api/users/:id/friend', async (req, res) => {
 });
 
 app.post('/api/admin/gift', async (req, res) => {
+  res.setHeader('Cache-Control','no-store');
   try {
     const admin = await findById(String(req.body?.adminId || ''));
-    const target = await findById(String(req.body?.targetId || ''));
+    const targetId = String(req.body?.targetId || '');
     const amount = Number(req.body?.amount);
     if (!admin || admin.access !== 'administrative') return res.status(403).json({ error: 'Administrative access required.' });
-    if (!target || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Choose a valid user and positive amount.' });
+    if (!targetId || !Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Choose a valid user and positive amount.' });
     const n = Math.floor(amount);
+
+    // Use PostgreSQL arithmetic instead of reading/modifying/writing a stale JS value.
+    // This makes gifts reliable even when multiple users are online at once.
+    if (pool) {
+      const { rows } = await pool.query(
+        'UPDATE users SET credits = credits + $1 WHERE id = $2 AND banned = FALSE RETURNING *',
+        [n, targetId]
+      );
+      if (!rows[0]) return res.status(404).json({ error: 'Target account was not found or is banned.' });
+      const target = rows[0];
+      const freshAdmin = await findById(admin.id);
+      return res.json({ admin: cleanUser(freshAdmin), target: cleanUser(target), gifted: n });
+    }
+
+    const target = await findById(targetId);
+    if (!target || target.banned) return res.status(404).json({ error: 'Target account was not found or is banned.' });
     target.credits = Number(target.credits || 0) + n;
     await saveUser(target);
     res.json({ admin: cleanUser(admin), target: cleanUser(target), gifted: n });
@@ -305,6 +324,7 @@ app.post('/api/users/:id/archive', async (req, res) => {
 });
 
 app.post('/api/users/:id/sell', async (req, res) => {
+  res.setHeader('Cache-Control','no-store');
   try {
     const user = await findById(req.params.id);
     const roleId = String(req.body?.roleId || '');
@@ -336,6 +356,9 @@ app.post('/api/users/:id/profile', async (req, res) => {
     if (typeof req.body.equippedTitleId === 'string' || req.body.equippedTitleId === null) {
       user.equipped_title_id = req.body.equippedTitleId;
     }
+    if (typeof req.body.avatar === 'string') user.avatar = req.body.avatar;
+    if (typeof req.body.banner === 'string') user.banner = req.body.banner;
+    if (typeof req.body.bio === 'string') user.bio = req.body.bio.slice(0, 180);
     await saveUser(user);
     res.json({ user: cleanUser(user) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Could not update profile.' }); }

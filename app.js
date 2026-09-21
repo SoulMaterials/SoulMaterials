@@ -38,26 +38,6 @@ function loadArchiveState(){
 }
 const state = loadArchiveState();
 
-// One-time fresh start: clear the old browser accounts so everyone can make
-// a brand-new SSML account. The version marker prevents this from deleting
-// newly-created accounts again on later refreshes.
-const ACCOUNT_RESET_VERSION = "ssml-fresh-start-2026-09-21-v2";
-function resetOldAccountsOnce(){
-  try {
-    if(localStorage.getItem(ACCOUNT_RESET_VERSION) === "done") return;
-    state.activeUserId = null;
-    state.accounts = {};
-    state.activity = [];
-    state.guestSeeded = false;
-    localStorage.removeItem(STORAGE);
-    localStorage.removeItem("ssmlRareArchiveV3");
-    localStorage.removeItem("ssmlArchiveState");
-    localStorage.setItem(ACCOUNT_RESET_VERSION, "done");
-  } catch(error) {
-    console.warn("Could not clear the old local SSML accounts.", error);
-  }
-}
-
 // The account modal uses this function for the main SIGN IN / JOIN SSML button.
 // A missing function here used to stop wireEvents() halfway through, which made
 // the sign-in and join buttons appear completely dead.
@@ -179,13 +159,19 @@ function save(){
     try{
       const lightweight={activeUserId:state.activeUserId,accounts:{},activity:state.activity.slice(0,20),guestSeeded:state.guestSeeded};
       for(const [id,a] of Object.entries(state.accounts)){
-        lightweight.accounts[id]={...a,activity:[],avatar:DEFAULT_AVATAR,banner:DEFAULT_BANNER};
+        // Keep identity/profile data when possible. The shared Render database is
+        // the durable source of truth, so localStorage is only a session cache.
+        lightweight.accounts[id]={...a,activity:[]};
       }
       localStorage.setItem(STORAGE,JSON.stringify(lightweight));
     }catch(_){
       console.warn("SSML is running in memory because browser storage is unavailable.");
     }
   }
+  try {
+    const me=state.activeUserId ? state.accounts[state.activeUserId] : null;
+    if(me?.username) localStorage.setItem("ssmlLastUsername", me.username);
+  } catch (_) {}
   renderAll();
 }
 function timeNow(){ return new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
@@ -506,6 +492,7 @@ async function completeProfile(access){
       const data=await apiRequest('/api/auth/register',{method:'POST',body:JSON.stringify({username,avatar,banner,bio,access,adminCode})});
       const a=mergeServerUser(data.user);
       state.activeUserId=a.id;
+      // Keep the complete profile locally as a cache too; Render remains durable.
       closeModal("signupModal"); $("#authGate").classList.add("hidden");
       save(); openProfile(a.id);
       return;
@@ -605,8 +592,19 @@ async function equipTitle(id){
   save(); openProfile(a.id);
 }
 
+let directoryRefreshTimer=null;
+function startDirectoryRefresh(){
+  if(directoryRefreshTimer) clearInterval(directoryRefreshTimer);
+  directoryRefreshTimer=setInterval(()=>{
+    const modal=$("#directoryModal");
+    if(!modal || modal.classList.contains("hidden")){
+      clearInterval(directoryRefreshTimer); directoryRefreshTimer=null; return;
+    }
+    searchDirectory();
+  },1200);
+}
 function openDirectory(){
-  $("#directorySearch").value=""; $("#directoryResults").innerHTML=`<div class="activity"><b>Search for an SSML username.</b></div>`; showModal("directoryModal"); searchDirectory();
+  $("#directorySearch").value=""; $("#directoryResults").innerHTML=`<div class="activity"><b>Loading SSML users...</b></div>`; showModal("directoryModal"); searchDirectory(); startDirectoryRefresh();
 }
 async function searchDirectory(){
   const q=$("#directorySearch").value.trim().toLowerCase();
@@ -704,8 +702,12 @@ async function giftCredits(){
     try{
       const data=await apiRequest("/api/admin/gift",{method:"POST",body:JSON.stringify({adminId:me.id,targetId,amount:n})});
       const target=mergeServerUser(data.target);
-      if(target.id===me.id) mergeServerUser(data.admin);
-      if(target.id===state.activeUserId) animateCurrency(n,"add");
+      if(data.admin) mergeServerUser(data.admin);
+      if(target.id===state.activeUserId){
+        $("#credits").textContent=money(target.credits);
+        $("#profileCredits").textContent=money(target.credits);
+        animateCurrency(n,"add");
+      }
       $("#adminTargetId").value=target.id; $("#adminTargetName").textContent=target.username; $("#adminTargetCredits").textContent=money(target.credits)+" C";
       $("#giftSuccess").textContent=`GIFTED +${money(n)} C TO ${target.username}`;
       save();
@@ -1021,10 +1023,52 @@ document.addEventListener("click",(e)=>{
   if(b){ e.preventDefault(); signInExisting(); }
 });
 
+
+let sharedAccountRefreshTimer=null;
+function startSharedAccountRefresh(){
+  if(sharedAccountRefreshTimer) clearInterval(sharedAccountRefreshTimer);
+  if(!serverMode) return;
+  sharedAccountRefreshTimer=setInterval(async()=>{
+    const me=account();
+    if(!me) return;
+    try {
+      const beforeCredits=Number(me.credits||0);
+      const data=await apiRequest(`/api/users/${encodeURIComponent(me.id)}`);
+      const fresh=mergeServerUser(data.user);
+      if(fresh.banned){
+        state.activeUserId=null;
+        save();
+        $("#authGate")?.classList.remove("hidden");
+        return;
+      }
+      if(Number(fresh.credits||0)!==beforeCredits) save();
+    } catch(_) {}
+  },3000);
+}
+
 async function bootSSML(){
   try {
-    resetOldAccountsOnce();
     await detectServer();
+    startSharedAccountRefresh();
+    // Restore the last signed-in account from Render automatically. This keeps
+    // a normal browser close/reopen from looking like the account was deleted.
+    // The server remains the durable source of truth; localStorage is only a cache.
+    if(serverMode && !state.activeUserId){
+      try {
+        const lastUsername = String(localStorage.getItem("ssmlLastUsername") || "").trim();
+        if(lastUsername){
+          const data = await apiRequest('/api/auth/login',{method:'POST',body:JSON.stringify({username:lastUsername})});
+          if(data?.user && !data.user.banned){
+            const restored = mergeServerUser(data.user);
+            state.activeUserId = restored.id;
+            save();
+          }
+        }
+      } catch(err){
+        // A missing/removed account should simply leave the sign-in gate visible.
+        console.warn("Automatic SSML account restore skipped.", err);
+      }
+    }
     // Migrate the previous prototype before rendering or deciding whether the gate is needed.
     (function migrateOld(){
       if(state.accounts && Object.keys(state.accounts).length)return;
