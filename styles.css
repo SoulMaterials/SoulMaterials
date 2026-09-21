@@ -278,3 +278,25 @@ img,video{max-width:100%;}
 
 .auth-fixed-note{margin:16px 0 0;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#ffffff04;color:#9aa9be;font-size:10px;letter-spacing:1px;text-align:center}
 .directory-user{display:flex;align-items:stretch;gap:7px}.directory-ban,.directory-gift,.admin-user-ban{border:1px solid var(--line);background:#ffffff08;color:var(--text);border-radius:8px;padding:8px 10px;font-size:9px;font-weight:800;letter-spacing:.7px}.directory-ban:hover,.admin-user-ban:hover{border-color:#ff536e66;color:#ff8a9c}.admin-user{display:flex;gap:7px;align-items:stretch}.admin-user-main{flex:1;display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:#ffffff04;border:1px solid var(--line);border-radius:9px;color:var(--text)}.admin-user-ban{min-width:64px}
+
+
+/* === MOBILE TOUCH / KEYBOARD HARDENING === */
+html,body{touch-action:pan-y;overscroll-behavior-y:auto;}
+button,a,input,textarea,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+button{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+@media(max-width:650px){
+  .modal{align-items:flex-start;justify-items:center;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));}
+  .modal-card{margin:auto 0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .signup-card{max-height:calc(100dvh - 20px);}
+  #signupStep1{padding-bottom:8px;}
+  #loginUsername{position:relative;z-index:2;}
+  #loginExisting,#openSignup,#continueJoin,#verifyAdmin{position:relative;z-index:3;pointer-events:auto;touch-action:manipulation;}
+  .login-row-stack{gap:10px;}
+  .login-row-stack button{display:block;opacity:1;visibility:visible;}
+  .gate{z-index:1000;}
+  .scanlines{z-index:5;pointer-events:none;}
+}
+@media(max-width:380px){
+  .gate-card{padding:28px 15px;}
+  .signup-card{padding-left:12px;padding-right:12px;}
+}

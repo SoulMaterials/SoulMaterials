@@ -20,7 +20,7 @@
       <p class="eyebrow">PRIVATE ARCHIVE // ACCESS REQUIRED</p>
       <h1>WAIT!</h1>
       <p class="gate-copy">You need to sign in before entering the SSML Rare Archive.</p>
-      <button id="openSignup" class="primary-btn">SIGN IN / JOIN SSML <span>→</span></button>
+      <button id="openSignup" type="button" class="primary-btn">SIGN IN / JOIN SSML <span>→</span></button>
       <p class="tiny-note">On the Render version, accounts and social features can use the shared server/database. GitHub Pages alone remains a browser-local demo.</p>
     </div>
   </div>
@@ -149,7 +149,7 @@
         </div>
         <label>BIO<textarea id="bioInput" maxlength="180" placeholder="Tell the archive who you are..."></textarea></label>
         <div class="auth-divider"><span>NEW ACCOUNT</span></div>
-        <button id="continueJoin" class="primary-btn full">JOIN SSML NOW →</button>
+        <button id="continueJoin" type="button" class="primary-btn full">JOIN SSML NOW →</button>
         <div class="auth-divider"><span>ALREADY HAVE AN SSML ACCOUNT?</span></div>
         <div class="login-row login-row-stack"><input id="loginUsername" placeholder="Existing SSML username" maxlength="24" autocomplete="username"><button type="button" id="loginExisting" class="secondary-btn">SIGN IN</button></div>
       </div>
@@ -159,8 +159,8 @@
         <h2>Do we know you?</h2>
         <p class="muted">Choose the access path that describes you.</p>
         <div class="role-choice">
-          <button data-access="member"><b>MEMBER</b><small>Standard SSML access</small></button>
-          <button data-access="administrative"><b>ADMINISTRATIVE</b><small>Requires proof</small></button>
+          <button type="button" data-access="member"><b>MEMBER</b><small>Standard SSML access</small></button>
+          <button type="button" data-access="administrative"><b>ADMINISTRATIVE</b><small>Requires proof</small></button>
         </div>
       </div>
       <div id="adminStep" class="hidden know-step">
@@ -168,7 +168,7 @@
         <p class="muted">Administrative access requires your verification code.</p>
         <input id="adminCode" class="code-input" placeholder="ENTER ADMIN CODE" autocomplete="off">
         <p id="adminError" class="error"></p>
-        <button id="verifyAdmin" class="primary-btn full">VERIFY ACCESS</button>
+        <button id="verifyAdmin" type="button" class="primary-btn full">VERIFY ACCESS</button>
       </div>
     </div>
   </div>

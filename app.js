@@ -986,6 +986,36 @@ $$("[data-config-tab]").forEach(b=>b.addEventListener("click",()=>{
 }));
 }
 
+// Touch-safe auth controls. Some mobile browsers can delay/drop synthetic click
+// events when the keyboard is open, so bind pointer/touch activation directly.
+(function bindMobileAuth(){
+  const bind=(selector,fn)=>{
+    const el=document.querySelector(selector);
+    if(!el || el.dataset.touchBound==="1") return;
+    el.dataset.touchBound="1";
+    let last=0;
+    const run=(e)=>{
+      if(e){ e.preventDefault(); e.stopPropagation(); }
+      const now=Date.now();
+      if(now-last<450) return;
+      last=now;
+      Promise.resolve(fn()).catch(err=>console.error(err));
+    };
+    el.addEventListener("pointerup",run,{passive:false});
+    el.addEventListener("touchend",run,{passive:false});
+    el.addEventListener("click",run,{passive:false});
+  };
+  bind("#openSignup",openAuth);
+  bind("#loginExisting",signInExisting);
+  bind("#continueJoin",()=>{
+    const input=$("#usernameInput");
+    if(!input?.value.trim()){ alert("Enter a username first."); input?.focus(); return; }
+    $("#signupStep1")?.classList.add("hidden");
+    $("#signupStep2")?.classList.remove("hidden");
+  });
+})();
+
+// Keep the delegated fallback for dynamically restored UI.
 document.addEventListener("click",(e)=>{
   const b=e.target.closest?.("#loginExisting");
   if(b){ e.preventDefault(); signInExisting(); }
