@@ -1,7 +1,7 @@
 window.SSML_CRATE_DATA = window.SSML_CRATE_DATA || [];
 
 window.SSML_CRATE_DATA.push({
-    id: "The-Dead-Heaven",
+    id: "the-dead-heaven",
 
     name: "T-H-E-D-E-A-D-H-E-A-V-E-N-S",
 
