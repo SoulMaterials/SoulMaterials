@@ -7,7 +7,7 @@ window.SSML_CRATE_DATA.push({
 
     tier: "ROTTEN HEAVEN'S",
 
-   image: "assets/dreed.png",
+   image: "assets/dreed.webp",
 
     accent: "#ffe2e2",
 

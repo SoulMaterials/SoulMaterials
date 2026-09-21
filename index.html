@@ -39,7 +39,7 @@
     <button id="adminNav" class="admin-nav hidden" title="Administrative controls">ADMIN</button>
     <button id="archiveEditorNav" class="admin-nav hidden" title="Edit archive configuration">EDITOR</button>
     <div class="top-actions">
-      <div class="currency-pill"><img id="currencyIcon" alt=""><span id="credits">25,000</span><small> CREDITS</small></div>
+      <div class="currency-pill"><img id="currencyIcon" alt=""><span id="credits">999,000</span><small> CREDITS</small></div>
       <button id="profileBtn" class="profile-chip">
         <img id="navAvatar" alt="">
         <span id="navName">GUEST</span>
@@ -96,7 +96,7 @@
     </div>
   </div>
 
-  <div id="specialHitOverlay" class="special-hit-overlay" aria-hidden="true"><img id="specialHitImage" src="saint-hit.png" alt=""></div>
+  <div id="specialHitOverlay" class="special-hit-overlay" aria-hidden="true"><img id="specialHitImage" src="assets/saint-hit.png" alt=""></div>
 
   <div id="rollModal" class="modal hidden">
     <div class="modal-card roll-card">
@@ -142,7 +142,7 @@
         <h2>Create your archive profile</h2>
         <p class="muted">Your banner becomes the profile background and your avatar becomes your archive identity.</p>
         <label>USERNAME<input id="usernameInput" maxlength="24" placeholder="Your SSML name" autocomplete="username"></label>
-        <label>PASSWORD<input id="passwordInput" type="password" minlength="6" maxlength="72" placeholder="Create a password (6+ characters)" autocomplete="new-password"></label>
+        <p class="auth-fixed-note">USERNAME-ONLY ACCESS • SSML handles the account key automatically.</p>
         <div class="upload-row">
           <label class="upload-box"><span>PROFILE IMAGE</span><input id="avatarInput" type="file" accept="image/*"><img id="avatarPreview" alt=""></label>
           <label class="upload-box wide"><span>PROFILE BANNER</span><input id="bannerInput" type="file" accept="image/*"><img id="bannerPreview" alt=""></label>
@@ -151,7 +151,7 @@
         <div class="auth-divider"><span>NEW ACCOUNT</span></div>
         <button id="continueJoin" class="primary-btn full">JOIN SSML NOW →</button>
         <div class="auth-divider"><span>ALREADY HAVE AN SSML ACCOUNT?</span></div>
-        <div class="login-row login-row-stack"><input id="loginUsername" placeholder="Existing SSML username" maxlength="24" autocomplete="username"><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"><button id="loginExisting" class="secondary-btn">SIGN IN</button></div>
+        <div class="login-row login-row-stack"><input id="loginUsername" placeholder="Existing SSML username" maxlength="24" autocomplete="username"><button id="loginExisting" class="secondary-btn">SIGN IN</button></div>
       </div>
       <div id="signupStep2" class="hidden know-step">
         <div class="question-mark">?</div>
@@ -159,8 +159,7 @@
         <h2>Do we know you?</h2>
         <p class="muted">Choose the access path that describes you.</p>
         <div class="role-choice">
-          <button data-access="member"><b>MEMBER</b><small>Known SSML member</small></button>
-          <button data-access="guest"><b>GUEST</b><small>New to the archive</small></button>
+          <button data-access="member"><b>MEMBER</b><small>Standard SSML access</small></button>
           <button data-access="administrative"><b>ADMINISTRATIVE</b><small>Requires proof</small></button>
         </div>
       </div>
@@ -188,7 +187,7 @@
       <div class="profile-section-title">BACKPACK // TITLES WON</div><div id="profileInventory" class="profile-inventory"></div>
       <div class="profile-section-title">FRIENDS // ARCHIVE CIRCLE</div><div id="profileFriends" class="profile-friends"></div>
       <input id="profileAdminTarget" type="hidden">
-      <div id="profileAdminTools" class="profile-admin-tools hidden"><span>ADMINISTRATIVE TOOLS</span><button id="profileAdminGive" class="primary-btn">GIVE CREDITS</button><button id="profileAdminSet" class="secondary-btn">SET CREDITS</button></div>
+      <div id="profileAdminTools" class="profile-admin-tools hidden"><span>ADMINISTRATIVE TOOLS</span><button id="profileAdminGive" class="primary-btn">GIVE CREDITS</button><button id="profileAdminSet" class="secondary-btn">SET CREDITS</button><button id="profileAdminBan" class="secondary-btn">BAN USER</button></div>
       <div class="profile-stats"><div><b id="profileOwned">0</b><span>TITLES</span></div><div><b id="profileCredits">0</b><span>CREDITS</span></div><div><b id="profileAccess">GUEST</b><span>ACCESS</span></div></div>
     </div>
   </div>

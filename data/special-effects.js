@@ -25,7 +25,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "🎃🩸 S-A-I-N-T--O-F--T-H-E--H-A-L-L-O-W--N-I-G-H-T--T-H-E--F-O-R-G-O-T-T-E-N--P-U-M-P-K-I-N--K-I-S-H-I-N",
     enabled: true,
     animation: "spin-expand",
-    image: "saint-hit.png",
+    image: "assets/saint-hit.png",
     sound: "assets/Doom effect.mp3",
     volume: 0.9,
     glowColor: "#ff4a00"
@@ -35,7 +35,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "F-E-L-L-O-W🪽",
     enabled: true,
     animation: "spin-expand",
-    image: "The wheel (1).png",
+    image: "assets/The wheel.png",
     sound: "assets/Doom effect.mp3",
     volume: 0.9,
     glowColor: "#ff4a00"
@@ -44,7 +44,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "A-L-Z-A-R-I-E-L",
     enabled: true,
     animation: "spin-expand",
-    image: "Glitch effect.gif",
+    image: "assets/Glitch effect.gif",
     sound: "assets/Glitch Sound Effect.mp3",
     volume: 0.9,
     glowColor: "#fffdfc"
@@ -53,7 +53,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "L-U-C-A-R-I-E-L [TOME]",
     enabled: true,
     animation: "spin-expand",
-    image: "Glitch effect.gif",
+    image: "assets/Glitch effect.gif",
     sound: "assets/Glitch Sound Effect.mp3",
     volume: 0.9,
     glowColor: "#fffdfc"
@@ -62,7 +62,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "E-R-A-E-L-I-O-N",
     enabled: true,
     animation: "spin-expand",
-    image: "Glitch effect.gif",
+    image: "assets/Glitch effect.gif",
     sound: "assets/Glitch Sound Effect.mp3",
     volume: 0.9,
     glowColor: "#fffdfc"
@@ -71,7 +71,7 @@ window.SSML_SPECIAL_EFFECTS = [
     title: "F-A-L-L-E-N-B-O-O-K-S-A-N-G-E-L",
     enabled: true,
     animation: "spin-expand",
-    image: "The wheel (1).png",
+    image: "assets/The wheel.png",
     sound: "assets/Doom effect.mp3",
     volume: 0.10,
     glowColor: "#ff4a00"

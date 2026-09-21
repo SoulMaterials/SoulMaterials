@@ -8,6 +8,9 @@ const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const HOST = '0.0.0.0';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://soulmaterials.github.io';
+const FIXED_PASSWORD = process.env.SSML_ACCOUNT_PASSWORD || 'Drool56';
+const ADMIN_CODE = process.env.SSML_ADMIN_CODE || 'SSML-ADMIN';
+const STARTING_CREDITS = 999000;
 
 app.use(express.json({ limit: '2mb' }));
 app.use((req, res, next) => {
@@ -37,9 +40,10 @@ function cleanUser(u) {
     avatar: u.avatar || '',
     banner: u.banner || '',
     bio: u.bio || 'No bio yet.',
-    access: u.access || 'guest',
-    credits: Number(u.credits || 25000),
-    titleId: u.title_id || u.titleId || (u.access === 'guest' ? 'guest' : 'member'),
+    access: u.access === 'administrative' ? 'administrative' : 'member',
+    banned: !!u.banned,
+    credits: Number(u.credits ?? STARTING_CREDITS),
+    titleId: u.title_id || u.titleId || (u.access === 'administrative' ? 'administrative' : 'drool56'),
     equippedTitleId: u.equipped_title_id || u.equippedTitleId || null,
     inventory: typeof u.inventory === 'string' ? JSON.parse(u.inventory || '{}') : (u.inventory || {}),
     following: typeof u.following === 'string' ? JSON.parse(u.following || '[]') : (u.following || []),
@@ -59,12 +63,13 @@ async function initDb() {
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      banned BOOLEAN DEFAULT FALSE,
       avatar TEXT DEFAULT '',
       banner TEXT DEFAULT '',
       bio TEXT DEFAULT 'No bio yet.',
-      access TEXT DEFAULT 'guest',
-      credits BIGINT DEFAULT 25000,
-      title_id TEXT DEFAULT 'guest',
+      access TEXT DEFAULT 'member',
+      credits BIGINT DEFAULT 999000,
+      title_id TEXT DEFAULT 'drool56',
       equipped_title_id TEXT,
       inventory JSONB DEFAULT '{}'::jsonb,
       following JSONB DEFAULT '[]'::jsonb,
@@ -74,15 +79,20 @@ async function initDb() {
     )
   `);
 
-  // ONE-TIME ACCOUNT RESET for the fresh SSML launch. The marker lives in the
-  // database, so this cannot keep deleting accounts after the first startup.
+  // Keep older Render databases compatible with the new account/ban model.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned BOOLEAN DEFAULT FALSE`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN access SET DEFAULT 'member'`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN credits SET DEFAULT 999000`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN title_id SET DEFAULT 'drool56'`);
+
+  // ONE-TIME ACCOUNT RESET for this fresh SSML launch.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ssml_system_flags (
       flag TEXT PRIMARY KEY,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  const resetFlag = 'fresh_start_2026_09_18_v1';
+  const resetFlag = 'fresh_start_2026_09_21_v2';
   const existing = await pool.query('SELECT 1 FROM ssml_system_flags WHERE flag=$1 LIMIT 1', [resetFlag]);
   if (!existing.rowCount) {
     await pool.query('DELETE FROM users');
@@ -110,10 +120,10 @@ async function findById(id) {
 async function saveUser(u) {
   if (pool) {
     await pool.query(`
-      UPDATE users SET avatar=$2,banner=$3,bio=$4,access=$5,credits=$6,title_id=$7,equipped_title_id=$8,
-      inventory=$9,following=$10,followers=$11,friends=$12 WHERE id=$1
-    `, [u.id, u.avatar || '', u.banner || '', u.bio || 'No bio yet.', u.access || 'guest', Number(u.credits || 0),
-      u.title_id || u.titleId || 'guest', u.equipped_title_id || u.equippedTitleId || null,
+      UPDATE users SET avatar=$2,banner=$3,bio=$4,access=$5,banned=$6,credits=$7,title_id=$8,equipped_title_id=$9,
+      inventory=$10,following=$11,followers=$12,friends=$13 WHERE id=$1
+    `, [u.id, u.avatar || '', u.banner || '', u.bio || 'No bio yet.', u.access === 'administrative' ? 'administrative' : 'member', !!u.banned, Number(u.credits ?? STARTING_CREDITS),
+      u.title_id || u.titleId || (u.access === 'administrative' ? 'administrative' : 'drool56'), u.equipped_title_id || u.equippedTitleId || null,
       JSON.stringify(u.inventory || {}), JSON.stringify(u.following || []), JSON.stringify(u.followers || []), JSON.stringify(u.friends || [])]);
   } else {
     memoryUsers.set(u.id, u);
@@ -121,13 +131,13 @@ async function saveUser(u) {
   return cleanUser(u);
 }
 
-async function listUsers(q) {
+async function listUsers(q, includeBanned=false) {
   if (pool) {
     const term = `%${q || ''}%`;
-    const { rows } = await pool.query('SELECT * FROM users WHERE username ILIKE $1 ORDER BY created_at ASC LIMIT 100', [term]);
+    const { rows } = await pool.query(`SELECT * FROM users WHERE username ILIKE $1 ${includeBanned ? '' : 'AND banned=FALSE'} ORDER BY created_at ASC LIMIT 100`, [term]);
     return rows.map(cleanUser);
   }
-  return [...memoryUsers.values()].filter(u => !q || u.username.toLowerCase().includes(q.toLowerCase())).slice(0, 100).map(cleanUser);
+  return [...memoryUsers.values()].filter(u => (includeBanned || !u.banned) && (!q || u.username.toLowerCase().includes(q.toLowerCase()))).slice(0, 100).map(cleanUser);
 }
 
 function newId() { return 'u_' + crypto.randomBytes(8).toString('hex'); }
@@ -136,40 +146,28 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, database: !!pool }));
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { username, password, avatar, banner, bio, access = 'guest' } = req.body || {};
+    const { username, avatar, banner, bio, access = 'member', adminCode = '' } = req.body || {};
     const name = String(username || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Username must be at least 2 characters.' });
-    if (String(password || '').length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-    if (!['guest', 'member', 'administrative'].includes(access)) return res.status(400).json({ error: 'Invalid access type.' });
+    const accessType = access === 'administrative' ? 'administrative' : 'member';
+    if (accessType === 'administrative' && String(adminCode) !== ADMIN_CODE) return res.status(403).json({ error: 'Administrative proof required.' });
     if (await findByUsername(name)) return res.status(409).json({ error: 'That username already exists.' });
-
     const id = newId();
-    const titleId = access === 'guest' ? 'guest' : 'member';
-    const hash = await bcrypt.hash(String(password), 12);
-    const user = {
-      id, username: name, password_hash: hash, avatar: avatar || '', banner: banner || '', bio: bio || 'No bio yet.',
-      access, credits: 25000, title_id: titleId, equipped_title_id: titleId,
-      inventory: { [titleId]: 1 }, following: [], followers: [], friends: []
-    };
-
-    if (pool) {
-      await pool.query(`INSERT INTO users
-        (id,username,password_hash,avatar,banner,bio,access,credits,title_id,equipped_title_id,inventory,following,followers,friends)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-        [id,name,hash,user.avatar,user.banner,user.bio,access,25000,titleId,titleId,
-          JSON.stringify(user.inventory),JSON.stringify([]),JSON.stringify([]),JSON.stringify([])]);
-    } else memoryUsers.set(id, user);
-
-    res.json({ user: cleanUser(user) });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Could not create the account.' });
-  }
+    const hash = await bcrypt.hash(FIXED_PASSWORD, 12);
+    const titleId = accessType === 'administrative' ? 'administrative' : 'drool56';
+    const inventory = { drool56: 1 };
+    if (accessType === 'administrative') inventory.administrative = 1;
+    const user = { id, username:name, password_hash:hash, avatar:avatar||'', banner:banner||'', bio:bio||'No bio yet.', access:accessType, banned:false, credits:STARTING_CREDITS, title_id:titleId, equipped_title_id:titleId, inventory, following:[], followers:[], friends:[] };
+    if(pool){
+      await pool.query(`INSERT INTO users (id,username,password_hash,avatar,banner,bio,access,banned,credits,title_id,equipped_title_id,inventory,following,followers,friends) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, [id,name,hash,user.avatar,user.banner,user.bio,user.access,false,STARTING_CREDITS,titleId,titleId,JSON.stringify(inventory),'[]','[]','[]']);
+    } else memoryUsers.set(id,user);
+    res.json({user:cleanUser(user)});
+  } catch(e){ console.error(e); res.status(500).json({error:'Could not create the account.'}); }
 });
 
 app.post('/api/auth/restore', async (req, res) => {
   try {
-    const { username, password, avatar, banner, bio, access = 'guest', credits, inventory, following, followers, friends, titleId, equippedTitleId, legacyId } = req.body || {};
+    const { username, password, avatar, banner, bio, access = 'member', credits, inventory, following, followers, friends, titleId, equippedTitleId, legacyId } = req.body || {};
     const name = String(username || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Username must be at least 2 characters.' });
     if (String(password || '').length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
@@ -178,9 +176,10 @@ app.post('/api/auth/restore', async (req, res) => {
     const hash = await bcrypt.hash(String(password), 12);
     const user = {
       id, username: name, password_hash: hash, avatar: avatar || '', banner: banner || '', bio: bio || 'No bio yet.',
-      access: ['guest','member','administrative'].includes(access) ? access : 'guest',
-      credits: Number.isFinite(Number(credits)) ? Math.max(0, Math.floor(Number(credits))) : 25000,
-      title_id: titleId || 'guest', equipped_title_id: equippedTitleId || titleId || 'guest',
+      access: access === 'administrative' ? 'administrative' : 'member',
+      banned: false,
+      credits: Number.isFinite(Number(credits)) ? Math.max(0, Math.floor(Number(credits))) : STARTING_CREDITS,
+      title_id: titleId || 'drool56', equipped_title_id: equippedTitleId || titleId || 'guest',
       inventory: inventory && typeof inventory === 'object' ? inventory : {},
       following: Array.isArray(following) ? following : [], followers: Array.isArray(followers) ? followers : [], friends: Array.isArray(friends) ? friends : []
     };
@@ -198,23 +197,19 @@ app.post('/api/auth/restore', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const username = String(req.body?.username || '').trim();
-    const password = String(req.body?.password || '');
-    const user = await findByUsername(username);
-    if (!user) return res.status(404).json({ error: 'Account not found.' });
-    const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: 'Incorrect password.' });
-    res.json({ user: cleanUser(user) });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Could not sign in.' });
-  }
+app.post('/api/auth/login', async (req,res)=>{
+  try{
+    const username=String(req.body?.username||'').trim();
+    if(!username)return res.status(400).json({error:'Username required.'});
+    const user=await findByUsername(username);
+    if(!user)return res.status(404).json({error:'Account not found.'});
+    if(user.banned)return res.status(403).json({error:'Account is banned.'});
+    res.json({user:cleanUser(user)});
+  }catch(e){console.error(e);res.status(500).json({error:'Could not sign in.'});}
 });
 
 app.get('/api/users', async (req, res) => {
-  try { res.json({ users: await listUsers(String(req.query.q || '').trim()) }); }
+  try { res.json({ users: await listUsers(String(req.query.q || '').trim(), String(req.query.admin || '') === '1') }); }
   catch (e) { console.error(e); res.status(500).json({ error: 'Could not load users.' }); }
 });
 
@@ -279,6 +274,19 @@ app.post('/api/admin/set-credits', async (req, res) => {
     await saveUser(target);
     res.json({ admin: cleanUser(admin), target: cleanUser(target) });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Could not set credits.' }); }
+});
+
+app.post('/api/admin/ban', async (req,res)=>{
+  try{
+    const admin=await findById(String(req.body?.adminId||''));
+    const target=await findById(String(req.body?.targetId||''));
+    const banned=!!req.body?.banned;
+    if(!admin||admin.access!=='administrative')return res.status(403).json({error:'Administrative access required.'});
+    if(!target)return res.status(404).json({error:'User not found.'});
+    if(target.id===admin.id)return res.status(400).json({error:'You cannot ban your own administrative account.'});
+    target.banned=banned; await saveUser(target);
+    res.json({target:cleanUser(target)});
+  }catch(e){console.error(e);res.status(500).json({error:'Could not update account ban.'});}
 });
 
 app.post('/api/users/:id/archive', async (req, res) => {
