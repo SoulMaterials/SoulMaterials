@@ -242,6 +242,36 @@ img,video{max-width:100%;}
 @media(max-width:650px){.profile-backpack-action{padding-left:18px;padding-right:18px}.sell-card .result-actions{flex-direction:column}.sell-card .result-actions button{width:100%}}
 
 
-/* Auto spin controls */
-.auto-spin-btn{width:100%;}
-.auto-spin-btn.auto-spin-active{border-color:#ff4a4a;box-shadow:0 0 18px rgba(255,70,70,.45);color:#fff;}
+/* Auto spin controls — styled to match the archive buttons */
+.auto-spin-btn{
+  flex:1;
+  width:100%;
+  border:1px solid #ffffff22;
+  border-radius:9px;
+  padding:12px 15px;
+  background:#000;
+  color:#fff;
+  font-weight:800;
+  font-size:10px;
+  letter-spacing:1px;
+  box-shadow:inset 0 0 14px #ffffff05,0 6px 18px #0008;
+  transition:.2s ease;
+}
+.auto-spin-btn:hover{
+  background:#080808;
+  border-color:#ffffff55;
+  box-shadow:inset 0 0 18px #ffffff08,0 0 20px #ffffff12;
+  transform:translateY(-1px);
+}
+.auto-spin-btn:active{transform:translateY(0);}
+.auto-spin-btn.auto-spin-active{
+  background:#000;
+  border-color:#ff4a4a;
+  color:#fff;
+  box-shadow:inset 0 0 18px #ff4a4a0c,0 0 18px rgba(255,70,70,.45);
+}
+.auto-spin-btn.auto-spin-active:hover{
+  border-color:#ff6666;
+  box-shadow:inset 0 0 22px #ff4a4a12,0 0 24px rgba(255,70,70,.55);
+}
+
